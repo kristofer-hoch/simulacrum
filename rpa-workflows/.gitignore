@@ -1,0 +1,8 @@
+# UiPath RPA specific ignores
+**/.local/**
+**/.settings/**
+**/.objects/**
+**/.tmh/**
+
+# Logs
+**/*.log
