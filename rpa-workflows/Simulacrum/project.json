@@ -1,0 +1,108 @@
+{
+  "name": "Simulacrum",
+  "projectId": "ce938d4e-f3ba-4ac3-8631-4bc40779ebb6",
+  "description": "Provide the Automation Center of Excellence with a reusable UiPath runtime simulator that converts configuration-driven, agent-generated records into realistic single-job or transactional executions. The simulator exercises Orchestrator assets, queues, stop requests, retries, application and data-source delays, business and system exceptions, structured logs, and UiPath Insights mappings without requiring production system integrations.\r\n",
+  "main": "ep_SingleJob.cs",
+  "dependencies": {
+    "UiPath.System.Activities": "[26.2.1]"
+  },
+  "webServices": [],
+  "entitiesStores": [],
+  "schemaVersion": "4.0",
+  "studioVersion": "26.0.189.0",
+  "projectVersion": "1.0.0",
+  "runtimeOptions": {
+    "autoDispose": false,
+    "netFrameworkLazyLoading": false,
+    "isPausable": true,
+    "isAttended": false,
+    "requiresUserInteraction": false,
+    "supportsPersistence": false,
+    "workflowSerialization": "NewtonsoftJson",
+    "excludedLoggedData": [
+      "Private:*",
+      "*password*"
+    ],
+    "executionType": "Workflow",
+    "readyForPiP": false,
+    "startsInPiP": false,
+    "mustRestoreAllDependencies": true,
+    "pipType": "SecondaryDesktop"
+  },
+  "designOptions": {
+    "projectProfile": "Developement",
+    "outputType": "Process",
+    "libraryOptions": {
+      "privateWorkflows": []
+    },
+    "processOptions": {
+      "ignoredFiles": []
+    },
+    "fileInfoCollection": [],
+    "saveToCloud": false
+  },
+  "expressionLanguage": "CSharp",
+  "entryPoints": [
+    {
+      "filePath": "ep_Dispatcher.cs",
+      "uniqueId": "50a43810-1ff5-4420-a218-6b0f5a0f5c51",
+      "input": [],
+      "output": []
+    },
+    {
+      "filePath": "ep_Performer.cs",
+      "uniqueId": "69f4808a-dff4-4e06-88fe-c1dc89350f35",
+      "input": [],
+      "output": []
+    },
+    {
+      "filePath": "ep_SingleJob.cs",
+      "uniqueId": "452cb66e-bc4f-4de6-ba20-8b7b77920d77",
+      "input": [],
+      "output": []
+    },
+    {
+      "filePath": "Workflows\\GetAgentData.cs",
+      "uniqueId": "d03c5d16-26f5-4298-adc4-fba91a9b58fc",
+      "input": [],
+      "output": []
+    },
+    {
+      "filePath": "Workflows\\GetConfiguration.cs",
+      "uniqueId": "8653f198-5bf0-449d-9531-b8748f304be3",
+      "input": [],
+      "output": []
+    },
+    {
+      "filePath": "Workflows\\GetTransaction.cs",
+      "uniqueId": "da271a1d-29d0-4483-b4b6-5f8b8b026eba",
+      "input": [],
+      "output": []
+    },
+    {
+      "filePath": "Workflows\\LogInsightsData.cs",
+      "uniqueId": "f274cbe3-85c3-463c-9c91-3761735115e7",
+      "input": [],
+      "output": []
+    },
+    {
+      "filePath": "Workflows\\Process.cs",
+      "uniqueId": "15fe2cbd-4bf4-4c0a-86ec-41cdfedd1e5f",
+      "input": [],
+      "output": []
+    },
+    {
+      "filePath": "Workflows\\GlobalException.cs",
+      "uniqueId": "2e929286-a71a-40d8-a030-ace45096e321",
+      "input": [],
+      "output": []
+    }
+  ],
+  "isTemplate": false,
+  "templateProjectData": {},
+  "publishData": {
+    "iconUrl": ".package/simulacrum.png"
+  },
+  "targetFramework": "Portable",
+  "automationHubIdeaUrl": "https://cloud.uipath.com/uipcs/clientsuccess/automationhub_/automation-profile/simulacrum---automation-execution-model-simulator"
+}

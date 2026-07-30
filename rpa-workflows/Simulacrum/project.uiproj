@@ -1,0 +1,6 @@
+{
+  "Name": "Simulacrum",
+  "ProjectType": "Process",
+  "Description": "Provide the Automation Center of Excellence with a reusable UiPath runtime simulator that converts configuration-driven, agent-generated records into realistic single-job or transactional executions. The simulator exercises Orchestrator assets, queues, stop requests, retries, application and data-source delays, business and system exceptions, structured logs, and UiPath Insights mappings without requiring production system integrations.\r\n",
+  "MainFile": "ep_SingleJob.cs"
+}

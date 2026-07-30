@@ -1,0 +1,10 @@
+{
+  "Tags": [
+    {
+      "Key": "Simulacrum"
+    }
+  ],
+  "SeparateRuntimeDependencies": true,
+  "IncludeSources": false,
+  "ConnectorKeys": []
+}
