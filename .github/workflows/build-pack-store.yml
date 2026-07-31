@@ -13,7 +13,7 @@ env:
     DIR_DISTRIBUTION: dist
     DIR_RPA_SIMULACRUM: rpa-workflows/Simulacrum 
 jobs:
-    setup:
+    build-pack-store:
         environment: Development
         runs-on: ubuntu-latest
         steps:
@@ -55,7 +55,7 @@ jobs:
             run: node create-nuget-packages.ts --config-dir ${{ env.DIR_GENERATED }} --project-dir ${{ env.DIR_RPA_SIMULACRUM }} --release-version ${{ steps.create-tag.outputs.version-tag }}
 
         -   name: Store Artifacts
-            uses: actions/upload-artifact@v3
+            uses: actions/upload-artifact@v4
             with:
                 name: rpa-artifacts-${{ steps.create-tag.outputs.version-tag }}
                 path: ${{ env.DIR_DISTRIBUTION }}/**
