@@ -43,8 +43,8 @@ jobs:
                     --authority ${{ vars.UIPATH_AUTHORITY }} \
                     --organization ${{ vars.UIPATH_ORGANIZATION }} \
                     --tenant ${{ vars.UIPATH_TENANT_NAME }}  \
-                    --client-id ${{ secrets.UIPATH_CLIENT_ID }} \
-                    --client-secret ${{ secrets.UIPATH_SECRET }}
+                    --client-id "${{ secrets.UIPATH_CLIENT_ID }}" \
+                    --client-secret "${{ secrets.UIPATH_SECRET }}"
 
         -   name: Create Distribution Directory
             run: mkdir -p ${{ env.DIR_DISTRIBUTION }}
