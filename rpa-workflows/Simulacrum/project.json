@@ -60,42 +60,6 @@
       "uniqueId": "452cb66e-bc4f-4de6-ba20-8b7b77920d77",
       "input": [],
       "output": []
-    },
-    {
-      "filePath": "Workflows\\GetAgentData.cs",
-      "uniqueId": "d03c5d16-26f5-4298-adc4-fba91a9b58fc",
-      "input": [],
-      "output": []
-    },
-    {
-      "filePath": "Workflows\\GetConfiguration.cs",
-      "uniqueId": "8653f198-5bf0-449d-9531-b8748f304be3",
-      "input": [],
-      "output": []
-    },
-    {
-      "filePath": "Workflows\\GetTransaction.cs",
-      "uniqueId": "da271a1d-29d0-4483-b4b6-5f8b8b026eba",
-      "input": [],
-      "output": []
-    },
-    {
-      "filePath": "Workflows\\LogInsightsData.cs",
-      "uniqueId": "f274cbe3-85c3-463c-9c91-3761735115e7",
-      "input": [],
-      "output": []
-    },
-    {
-      "filePath": "Workflows\\Process.cs",
-      "uniqueId": "15fe2cbd-4bf4-4c0a-86ec-41cdfedd1e5f",
-      "input": [],
-      "output": []
-    },
-    {
-      "filePath": "Workflows\\GlobalException.cs",
-      "uniqueId": "2e929286-a71a-40d8-a030-ace45096e321",
-      "input": [],
-      "output": []
     }
   ],
   "isTemplate": false,
