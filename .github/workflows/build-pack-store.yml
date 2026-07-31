@@ -20,7 +20,10 @@ jobs:
         -   name: Set up Node.js
             uses: actions/setup-node@v4
             with:
-                node-version: ${{ env.NODE_VERSION }}
+                node-version: 'latest' # You can also use 'current' or '*'
+                check-latest: true     
+        -   name: Verify Node.js Version
+            run: node -v    
 
         -   name: Install UiPath CLI
             run: npm install -g @uipath/cli
