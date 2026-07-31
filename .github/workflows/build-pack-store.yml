@@ -38,13 +38,13 @@ jobs:
         -   name: UiPath Login
             run: |
                 echo "Logging into UiPath Orchestrator..."
-                echo "uip login  --authority ${{ env.UIPATH_AUTHORITY }} --organization ${{ env.UIPATH_ORGANIZATION }} --tenant ${{ env.UIPATH_TENANT_NAME }}"
+                echo "uip login  --authority ${{ vars.UIPATH_AUTHORITY }} --organization ${{ vars.UIPATH_ORGANIZATION }} --tenant ${{ vars.UIPATH_TENANT_NAME }}"
                 uip login \
-                    --authority ${{ env.UIPATH_AUTHORITY }} \
-                    --organization ${{ env.UIPATH_ORGANIZATION }} \
-                    --tenant ${{ env.UIPATH_TENANT_NAME }}  \
+                    --authority ${{ vars.UIPATH_AUTHORITY }} \
+                    --organization ${{ vars.UIPATH_ORGANIZATION }} \
+                    --tenant ${{ vars.UIPATH_TENANT_NAME }}  \
                     --client-id ${{ secrets.UIPATH_CLIENT_ID }} \
-                    --client-secret ${{ secrets.UIPATH_CLIENT_SECRET }}
+                    --client-secret ${{ secrets.UIPATH_SECRET }}
 
         -   name: Create Distribution Directory
             run: mkdir -p ${{ env.DIR_DISTRIBUTION }}
