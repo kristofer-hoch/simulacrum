@@ -2,6 +2,7 @@
 
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 /** An Orchestrator asset declared by a deployment configuration. */
 export interface DeploymentAsset {
@@ -34,6 +35,7 @@ export interface DeploymentQueue {
  */
 export class DeploymentConfigurationModel {
   folder: string;
+  description: string;
   packageFeed: string;
   packageId: string;
   assets: DeploymentAsset[];
@@ -42,6 +44,7 @@ export class DeploymentConfigurationModel {
 
   constructor(configuration: {
     folder: string;
+    description: string;
     packageFeed: string;
     packageId: string;
     assets: DeploymentAsset[];
@@ -49,6 +52,7 @@ export class DeploymentConfigurationModel {
     queue?: DeploymentQueue;
   }) {
     this.folder = configuration.folder;
+    this.description = configuration.description;
     this.packageFeed = configuration.packageFeed;
     this.packageId = configuration.packageId;
     this.assets = configuration.assets;
@@ -62,6 +66,7 @@ export class DeploymentConfigurationModel {
     }
 
     const folder = requireString(value, "folder", source);
+    const description = requireString(value, "description", source);
     const packageFeed = requireString(value, "packageFeed", source);
     const packageId = requireString(value, "packageId", source);
     const assets = requireObjectArray(value, "assets", source).map(
@@ -117,6 +122,7 @@ export class DeploymentConfigurationModel {
 
     return new DeploymentConfigurationModel({
       folder,
+      description,
       packageFeed,
       packageId,
       assets,
@@ -197,7 +203,10 @@ function parseConfigDirectory(argv: string[]): string {
   return path.resolve(configDir);
 }
 
-async function loadConfigurations(configDir: string): Promise<void> {
+export async function loadConfigurations(configDir: string): Promise<void> {
+  Configurations.length = 0;
+  PackageFeeds.length = 0;
+
   let entries;
 
   try {
@@ -237,4 +246,10 @@ async function loadConfigurations(configDir: string): Promise<void> {
   }
 }
 
-await loadConfigurations(parseConfigDirectory(process.argv.slice(2)));
+const isMainModule =
+  process.argv[1] !== undefined &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
+  await loadConfigurations(parseConfigDirectory(process.argv.slice(2)));
+}

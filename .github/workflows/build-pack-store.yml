@@ -1,0 +1,64 @@
+name: Build, Pack, and Store Artifacts
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+env: 
+    NODE_VERSION: 24
+    DIR_DEPLOYMENT: .github/deployment
+    DIR_SCRIPTS: .github/scripts
+    DIR_CONFIGS: .github/deployment/configs
+    DIR_GENERATED: .github/deployment/generated-configs
+    DIR_DISTRIBUTION: dist
+    DIR_RPA_SIMULACRUM: rpa-workflows/Simulacrum 
+jobs:
+    setup:
+        environment: Development
+        runs-on: ubuntu-latest
+        steps:
+        -   name: Set up Node.js
+            uses: actions/setup-node@v3
+            with:
+                node-version: ${{ env.NODE_VERSION }}
+
+        -   name: Install UiPath CLI
+            run: npm install -g @uipath/cli
+            
+        -   name: Pre-Install UiPath CLI Tools
+            run: uip tools install @uipath/orchestrator-tool
+            
+        -   name: Pre-Install UiPath CLI Tools
+            run: |
+                uip tools install @uipath/orchestrator-tool
+                uip tools install @uipath/rpa-tool
+
+        -   name: Create Distribution Directory
+            run: mkdir -p ${{ env.DIR_DISTRIBUTION }}
+
+        -   name: Check out repository
+            uses: actions/checkout@v4
+
+        -   name: Create Version Tag
+            id: create-tag
+            run: node ${{ env.DIR_SCRIPTS }}/create-release-tag.js 
+            
+        -   name: Generate Deployment Configurations
+            run: |
+                cd ${{ env.DIR_DEPLOYMENT}}
+                node ${{ env.DIR_SCRIPTS}}/generate-deployment-configs.js --config-dir ${{ env.DIR_CONFIGS }} --output-dir ${{ env.DIR_GENERATED }} --global-config ${{ env.DIR_CONFIGS }}/global.deploy.json
+            
+        -   name: Build the Project
+            run: uip rpa build ${{ env.DIR_RPA_SIMULACRUM }} 
+
+        -   name: Pack the Project
+            run: node create-nuget-packages.ts --config-dir ${{ env.DIR_GENERATED }} --project-dir ${{ env.DIR_RPA_SIMULACRUM }} --release-version ${{ steps.create-tag.outputs.version-tag }}
+
+        -   name: Store Artifacts
+            uses: actions/upload-artifact@v3
+            with:
+                name: rpa-artifacts-${{ steps.create-tag.outputs.version-tag }}
+                path: ${{ env.DIR_DISTRIBUTION }}/**
+
+            #        -   name: UiPath Login
+#            run: uip login --authority ${{ env.UIPATH_AUTHORITY }} --organization ${{ env.UIPATH_ORGANIZATION }} --tenant-name ${{ env.UIPATH_TENANT_NAME }}  --client-id ${{ env.UIPATH_CLIENT_ID }} --client-secret ${{ secrets.UIPATH_CLIENT_SECRET }}

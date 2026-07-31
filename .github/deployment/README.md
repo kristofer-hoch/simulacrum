@@ -145,6 +145,7 @@ Every deployment file defines:
 
 - The Orchestrator folder derived from `category_path`, with the original
   process name appended.
+- The top-level description from `automation.description`.
 - The package feed from `automation.category_path.category_1`.
 - A package ID in the form `Simulacrum.<ProcessNameNormalized>`.
 - `Configuration` and `InsightsDataMap` text assets whose values come from

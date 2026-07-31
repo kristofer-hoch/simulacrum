@@ -85,6 +85,7 @@ interface GlobalConfiguration {
 /** Shape written to each Simulacrum.<name>.<process-id>.deploy.json file. */
 interface DeploymentConfiguration {
   folder: string;
+  description: string;
   packageFeed: string;
   packageId: string;
   assets: DeploymentAsset[];
@@ -309,6 +310,7 @@ function buildDeploymentConfiguration(
 
   const deployment: DeploymentConfiguration = {
     folder: `${buildOrchestratorFolder(automation.category_path)}/${processName}`,
+    description: automation.description,
     // Top-level automation categories double as Orchestrator package feeds.
     packageFeed: automation.category_path.category_1,
     packageId: `Simulacrum.${processNameNormalized}`,
