@@ -38,7 +38,12 @@ jobs:
         -   name: UiPath Login
             run: |
                 echo "Logging into UiPath Orchestrator..."
-                uip login --authority ${{ env.UIPATH_AUTHORITY }} --organization ${{ env.UIPATH_ORGANIZATION }} --tenant-name ${{ env.UIPATH_TENANT_NAME }}  --client-id ${{ env.UIPATH_CLIENT_ID }} --client-secret ${{ secrets.UIPATH_CLIENT_SECRET }}
+                uip login \
+                    --authority ${{ env.UIPATH_AUTHORITY }} \
+                    --organization ${{ env.UIPATH_ORGANIZATION }} \
+                    --tenant ${{ env.UIPATH_TENANT_NAME }}  \
+                    --client-id ${{ env.UIPATH_CLIENT_ID }} \
+                    --client-secret ${{ secrets.UIPATH_CLIENT_SECRET }}
 
         -   name: Create Distribution Directory
             run: mkdir -p ${{ env.DIR_DISTRIBUTION }}
@@ -51,13 +56,21 @@ jobs:
             run: node ${{ env.DIR_SCRIPTS }}/create-release-tag.ts
             
         -   name: Generate Deployment Configurations
-            run: node ${{ env.DIR_SCRIPTS}}/generate-deployment-configurations.ts --config-dir ${{ env.DIR_CONFIGS }} --output-dir ${{ env.DIR_GENERATED }} --global-config ${{ env.DIR_DEPLOYMENT }}/global.deploy.json
+            run: |
+                node ${{ env.DIR_SCRIPTS}}/generate-deployment-configurations.ts \
+                    --config-dir ${{ env.DIR_CONFIGS }} \
+                    --output-dir ${{ env.DIR_GENERATED }} \
+                    --global-config ${{ env.DIR_DEPLOYMENT }}/global.deploy.json
             
         -   name: Build the Project
             run: uip rpa build ${{ env.DIR_RPA_SIMULACRUM }} 
-
+                
         -   name: Pack the Project
-            run: node ${{ env.DIR_SCRIPTS }}/create-nuget-packages.ts --config-dir ${{ env.DIR_GENERATED }} --project-dir ${{ env.DIR_RPA_SIMULACRUM }} --release-version ${{ env.RELEASE_TAG }}
+            run: |
+                node ${{ env.DIR_SCRIPTS }}/create-nuget-packages.ts \
+                    --config-dir ${{ env.DIR_GENERATED }} \
+                    --project-dir ${{ env.DIR_RPA_SIMULACRUM }} \
+                    --release-version ${{ env.RELEASE_TAG }}
 
         -   name: Store Artifacts
             uses: actions/upload-artifact@v4
