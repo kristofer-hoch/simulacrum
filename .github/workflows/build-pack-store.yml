@@ -4,6 +4,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+permissions:
+    contents: write
 env: 
     NODE_VERSION: 24
     DIR_DEPLOYMENT: .github/deployment
