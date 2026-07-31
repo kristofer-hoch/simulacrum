@@ -41,7 +41,7 @@ jobs:
 
         -   name: Create Version Tag
             id: create-tag
-            run: node ${{ env.DIR_SCRIPTS }}/create-release-tag.js 
+            run: node ${{ env.DIR_SCRIPTS }}/create-release-tag.ts
             
         -   name: Generate Deployment Configurations
             run: |
@@ -52,13 +52,14 @@ jobs:
             run: uip rpa build ${{ env.DIR_RPA_SIMULACRUM }} 
 
         -   name: Pack the Project
-            run: node create-nuget-packages.ts --config-dir ${{ env.DIR_GENERATED }} --project-dir ${{ env.DIR_RPA_SIMULACRUM }} --release-version ${{ steps.create-tag.outputs.version-tag }}
+            run: node create-nuget-packages.ts --config-dir ${{ env.DIR_GENERATED }} --project-dir ${{ env.DIR_RPA_SIMULACRUM }} --release-version ${{ env.RELEASE_TAG }}
 
         -   name: Store Artifacts
             uses: actions/upload-artifact@v4
             with:
-                name: rpa-artifacts-${{ steps.create-tag.outputs.version-tag }}
+                name: rpa-artifacts-${{ env.RELEASE_TAG }}
                 path: ${{ env.DIR_DISTRIBUTION }}/**
 
-            #        -   name: UiPath Login
+
+#        -   name: UiPath Login
 #            run: uip login --authority ${{ env.UIPATH_AUTHORITY }} --organization ${{ env.UIPATH_ORGANIZATION }} --tenant-name ${{ env.UIPATH_TENANT_NAME }}  --client-id ${{ env.UIPATH_CLIENT_ID }} --client-secret ${{ secrets.UIPATH_CLIENT_SECRET }}
