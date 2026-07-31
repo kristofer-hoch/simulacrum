@@ -49,7 +49,7 @@ jobs:
             run: node ${{ env.DIR_SCRIPTS }}/create-release-tag.ts
             
         -   name: Generate Deployment Configurations
-            run: node ${{ env.DIR_SCRIPTS}}/generate-deployment-configurations.ts --config-dir ${{ env.DIR_CONFIGS }} --output-dir ${{ env.DIR_GENERATED }} --global-config ${{ env.DIR_CONFIGS }}/global.deploy.json
+            run: node ${{ env.DIR_SCRIPTS}}/generate-deployment-configurations.ts --config-dir ${{ env.DIR_CONFIGS }} --output-dir ${{ env.DIR_GENERATED }} --global-config ${{ env.DIR_DEPLOYMENT }}/global.deploy.json
             
         -   name: Build the Project
             run: uip rpa build ${{ env.DIR_RPA_SIMULACRUM }} 
