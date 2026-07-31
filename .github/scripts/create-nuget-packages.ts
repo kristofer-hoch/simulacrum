@@ -72,6 +72,7 @@ function runUipPack(
   outputDir: string,
 ): Promise<void> {
   const uipArguments = [
+    "rpa",
     "pack",
     "--package-id",
     packageId,
@@ -124,7 +125,7 @@ function runUipPack(
       }
 
       const reason = signal ? `signal ${signal}` : `exit code ${code}`;
-      reject(new Error(`uip pack failed for ${packageId} with ${reason}`));
+      reject(new Error(`uip rpa pack failed for ${packageId} with ${reason}`));
     });
   });
 }
