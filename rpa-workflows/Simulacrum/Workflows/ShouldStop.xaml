@@ -72,13 +72,13 @@
       <AssemblyReference>System.Linq.Expressions</AssemblyReference>
     </sco:Collection>
   </TextExpression.ReferencesForImplementation>
-  <Sequence DisplayName="ShouldStop" sap:VirtualizedContainerService.HintSize="912.3333333333333,364.32333333333327" sap2010:WorkflowViewState.IdRef="Sequence_1">
+  <Sequence DisplayName="ShouldStop" sap:VirtualizedContainerService.HintSize="569,319.65666666666664" sap2010:WorkflowViewState.IdRef="Sequence_1">
     <sap:WorkflowViewStateService.ViewState>
       <scg:Dictionary x:TypeArguments="x:String, x:Object">
         <x:Boolean x:Key="IsExpanded">True</x:Boolean>
       </scg:Dictionary>
     </sap:WorkflowViewStateService.ViewState>
-    <ui:LogMessage DisplayName="Log Message" sap:VirtualizedContainerService.HintSize="450,48" sap2010:WorkflowViewState.IdRef="LogMessage_1" Level="Info">
+    <ui:LogMessage DisplayName="Log Message: Workflow Start" sap:VirtualizedContainerService.HintSize="450,48" sap2010:WorkflowViewState.IdRef="LogMessage_1" Level="Info">
       <ui:LogMessage.Message>
         <InArgument x:TypeArguments="x:Object">
           <CSharpValue x:TypeArguments="x:Object" sap2010:WorkflowViewState.IdRef="CSharpValue`1_1">"Checking for a reason to stop processing."</CSharpValue>
@@ -90,7 +90,7 @@
         </scg:Dictionary>
       </sap:WorkflowViewStateService.ViewState>
     </ui:LogMessage>
-    <ui:ShouldStop DisplayName="Should Stop" sap:VirtualizedContainerService.HintSize="450,48" sap2010:WorkflowViewState.IdRef="ShouldStop_1">
+    <ui:ShouldStop DisplayName="Should Stop: Check if should stop" sap:VirtualizedContainerService.HintSize="450,48" sap2010:WorkflowViewState.IdRef="ShouldStop_1">
       <ui:ShouldStop.Result>
         <OutArgument x:TypeArguments="x:Boolean">
           <CSharpReference x:TypeArguments="x:Boolean" sap2010:WorkflowViewState.IdRef="CSharpReference`1_1">out_ShouldStop</CSharpReference>
