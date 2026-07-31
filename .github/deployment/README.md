@@ -6,14 +6,17 @@ to provision Simulacrum automations in UiPath Orchestrator.
 The deployment flow is configuration-driven:
 
 1. An automation author adds or updates a `Configuration.json`.
-2. The deployment generator discovers every configuration recursively.
-3. A missing `InsightsDataMap.json` is derived from the input schema.
-4. One `<ProcessNameNormalized>.<ProcessId>.deploy.json` file is generated for
-   each automation.
-5. The deployment pipeline resolves environment-specific values, builds or
-   publishes the corresponding Simulacrum package, and applies the global and
-   automation deployment files to Orchestrator.
-6. The deployed resources are verified in the target Orchestrator folder.
+2. The deployment generator loads the shared assets from
+   `global.deploy.json`.
+3. The generator discovers every automation configuration recursively.
+4. A missing `InsightsDataMap.json` is derived from the input schema.
+5. One `Simulacrum.<ProcessNameNormalized>.<ProcessId>.deploy.json` file is
+   generated for each automation, including both automation-specific and
+   global assets.
+6. The deployment pipeline builds or publishes the corresponding Simulacrum
+   package and applies the generated automation deployment files to
+   Orchestrator.
+7. The deployed resources are verified in the target Orchestrator folder.
 
 ## Repository layout
 
@@ -33,7 +36,8 @@ The deployment flow is configuration-driven:
 ```
 
 - `configs/` is the deployment source of truth for individual automations.
-- `global.deploy.json` defines shared assets used by all automations.
+- `global.deploy.json` defines shared assets copied into every automation
+  deployment.
 - `generate-deployment-configurations.ts` creates per-automation deployment
   files.
 - `cicd-pipeline.yml` contains the GitHub Actions entry point.
@@ -104,21 +108,24 @@ Run:
 ```powershell
 node .github/scripts/generate-deployment-configurations.ts `
   --config-dir .github/deployment/configs `
-  --output-dir .github/deployment/generated
+  --output-dir .github/deployment/generated `
+  --global-config .github/deployment/global.deploy.json
 ```
 
 The equivalent single-line command works in Bash:
 
 ```bash
-node .github/scripts/generate-deployment-configurations.ts --config-dir .github/deployment/configs --output-dir .github/deployment/generated
+node .github/scripts/generate-deployment-configurations.ts --config-dir .github/deployment/configs --output-dir .github/deployment/generated --global-config .github/deployment/global.deploy.json
 ```
 
-Both arguments are required:
+All three arguments are required:
 
 - `--config-dir` is recursively searched for files named exactly
   `Configuration.json`.
 - `--output-dir` is created when necessary and receives all generated
   `*.deploy.json` files.
+- `--global-config` identifies the JSON file whose `assets` array is copied
+  into every generated deployment.
 
 Generation is deterministic. Invalid JSON, missing required properties,
 unknown arguments, and file-system errors stop the script with a non-zero exit
@@ -131,7 +138,7 @@ filenames. For example:
 
 ```text
 Customer Health Escalation Monitor
-└── CustomerHealthEscalationMonitor.36.deploy.json
+└── Simulacrum.CustomerHealthEscalationMonitor.36.deploy.json
 ```
 
 Every deployment file defines:
@@ -142,6 +149,13 @@ Every deployment file defines:
 - A package ID in the form `Simulacrum.<ProcessNameNormalized>`.
 - `Configuration` and `InsightsDataMap` text assets whose values come from
   their JSON files.
+- Every asset from the `assets` array in the file passed to
+  `--global-config`.
+
+Global assets are appended after the `Configuration` and `InsightsDataMap`
+assets, in their original order. Their JSON properties are preserved. The
+script stops before creating output files if the global configuration is
+missing, invalid JSON, or does not contain an `assets` array.
 
 ### Transactional execution
 
@@ -215,9 +229,9 @@ A complete CI/CD job should perform these stages in order:
 5. Authenticate to the target UiPath organization and tenant.
 6. Run the deployment generator.
 7. Build and publish the Simulacrum RPA package for each generated package ID.
-8. Apply `global.deploy.json`.
-9. Apply each generated `*.deploy.json`.
-10. Verify folders, assets, queues, processes, entry points, and package
+8. Apply each generated `*.deploy.json`, which already includes the global
+   assets.
+9. Verify folders, assets, queues, processes, entry points, and package
     versions in Orchestrator.
 
 At present, `.github/workflows/cicd-pipeline.yml` only contains part of the
@@ -234,6 +248,7 @@ Before merging configuration changes:
 - Confirm generated filenames are unique.
 - Review folder paths and package IDs.
 - Review new Insights mappings for type and numbering correctness.
+- Confirm the global assets appear in every generated deployment.
 - Confirm transactional automations have a queue and two processes.
 - Confirm non-transactional automations have one bot process.
 - Confirm the CI environment provides all required variables and secrets.
@@ -241,8 +256,8 @@ Before merging configuration changes:
 
 After deployment:
 
-- Verify the shared `DataAgentFolder` and `DataAgentName` assets from
-  `global.deploy.json`.
+- Verify each automation folder contains the shared `DataAgentFolder` and
+  `DataAgentName` assets from `global.deploy.json`.
 - Verify each automation's `Configuration` and `InsightsDataMap` text assets.
 - Verify queues exist only for transactional automations.
 - Verify process entry points and package versions.
@@ -254,6 +269,11 @@ After deployment:
 
 Pass each flag once and provide its value as the following argument. The
 `--config-dir=value` form is not supported.
+
+### The global configuration is rejected
+
+Confirm the `--global-config` path exists, contains valid JSON, and has an
+`assets` array. Every entry in that array must be a JSON object.
 
 ### A configuration cannot be parsed
 

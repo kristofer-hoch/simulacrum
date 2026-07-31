@@ -12,6 +12,7 @@ const INSIGHTS_DATA_MAP_FILE_NAME = "InsightsDataMap.json";
 interface Arguments {
   configDir: string;
   outputDir: string;
+  globalConfig: string;
 }
 
 /** Category hierarchy used to construct an Orchestrator folder path. */
@@ -62,17 +63,31 @@ interface ProcessDefinition {
   entryPoint: string;
 }
 
-/** Shape written to each <name>.<process-id>.deploy.json file. */
+/**
+ * Assets may contain an inline value (global assets) or a valueFile
+ * (automation-specific assets). Additional deployment properties are
+ * preserved when copied from the global configuration.
+ */
+interface DeploymentAsset {
+  name: string;
+  description: string;
+  type: string;
+  value?: unknown;
+  valueFile?: string;
+  [property: string]: unknown;
+}
+
+/** Shared deployment settings loaded once from --global-config. */
+interface GlobalConfiguration {
+  assets: DeploymentAsset[];
+}
+
+/** Shape written to each Simulacrum.<name>.<process-id>.deploy.json file. */
 interface DeploymentConfiguration {
   folder: string;
   packageFeed: string;
   packageId: string;
-  assets: Array<{
-    name: string;
-    description: string;
-    type: "Text";
-    valueFile: string;
-  }>;
+  assets: DeploymentAsset[];
   queue?: {
     name: string;
     description: string;
@@ -83,7 +98,7 @@ interface DeploymentConfiguration {
 /** Print the supported invocation without hiding the validation error. */
 function printUsage(): void {
   console.error(
-    "Usage: generate-deployment-configurations.ts --config-dir CONFIG_DIR --output-dir OUTPUT_DIR",
+    "Usage: generate-deployment-configurations.ts --config-dir CONFIG_DIR --output-dir OUTPUT_DIR --global-config GLOBAL_CONFIG",
   );
 }
 
@@ -97,7 +112,11 @@ function parseArguments(argv: string[]): Arguments {
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
 
-    if (argument !== "--config-dir" && argument !== "--output-dir") {
+    if (
+      argument !== "--config-dir" &&
+      argument !== "--output-dir" &&
+      argument !== "--global-config"
+    ) {
       throw new Error(`Unknown argument: ${argument}`);
     }
 
@@ -116,12 +135,58 @@ function parseArguments(argv: string[]): Arguments {
 
   const configDir = values.get("--config-dir");
   const outputDir = values.get("--output-dir");
+  const globalConfig = values.get("--global-config");
 
-  if (!configDir || !outputDir) {
-    throw new Error("Both --config-dir and --output-dir are required");
+  if (!configDir || !outputDir || !globalConfig) {
+    throw new Error(
+      "--config-dir, --output-dir, and --global-config are required",
+    );
   }
 
-  return { configDir, outputDir };
+  return { configDir, outputDir, globalConfig };
+}
+
+/**
+ * Load and validate the shared assets before any automation files are created.
+ * Asset objects are retained as authored so deployment-specific properties
+ * beyond the standard name, description, type, and value are not discarded.
+ */
+async function loadGlobalConfiguration(
+  globalConfigPath: string,
+): Promise<GlobalConfiguration> {
+  let parsedGlobalConfig: unknown;
+
+  try {
+    const contents = await readFile(globalConfigPath, "utf8");
+    parsedGlobalConfig = JSON.parse(contents.replace(/^\uFEFF/, ""));
+  } catch (error) {
+    throw new Error(
+      `Unable to parse global configuration ${globalConfigPath}: ${(error as Error).message}`,
+    );
+  }
+
+  if (!parsedGlobalConfig || typeof parsedGlobalConfig !== "object") {
+    throw new Error(
+      `Invalid global configuration ${globalConfigPath}: root must be a JSON object`,
+    );
+  }
+
+  const assets = (parsedGlobalConfig as { assets?: unknown }).assets;
+  if (!Array.isArray(assets)) {
+    throw new Error(
+      `Invalid global configuration ${globalConfigPath}: assets must be an array`,
+    );
+  }
+
+  for (const [index, asset] of assets.entries()) {
+    if (!asset || typeof asset !== "object" || Array.isArray(asset)) {
+      throw new Error(
+        `Invalid global configuration ${globalConfigPath}: assets[${index}] must be a JSON object`,
+      );
+    }
+  }
+
+  return { assets: assets as DeploymentAsset[] };
 }
 
 /** Recursively discover Configuration.json files in deterministic order. */
@@ -236,6 +301,7 @@ function buildDeploymentConfiguration(
   configuration: Configuration,
   configurationPath: string,
   insightsDataMapPath: string,
+  globalAssets: DeploymentAsset[],
 ): DeploymentConfiguration {
   const automation = configuration.automation;
   const processName = automation.automation_name;
@@ -259,6 +325,8 @@ function buildDeploymentConfiguration(
         type: "Text",
         valueFile: repositoryRelativePath(insightsDataMapPath),
       },
+      // Global assets follow local assets and retain their authored properties.
+      ...globalAssets,
     ],
     processes: [],
   };
@@ -375,6 +443,7 @@ async function fileExists(filePath: string): Promise<boolean> {
 async function processConfiguration(
   configurationPath: string,
   outputDir: string,
+  globalAssets: DeploymentAsset[],
 ): Promise<string> {
   let parsedConfiguration: unknown;
 
@@ -416,11 +485,12 @@ async function processConfiguration(
     configuration,
     configurationPath,
     insightsDataMapPath,
+    globalAssets,
   );
   const processNameNormalized =
     configuration.automation.automation_name.replaceAll(" ", "");
   const deploymentFileName =
-    `${processNameNormalized}.${configuration.automation.process_id}.deploy.json`;
+    `Simulacrum.${processNameNormalized}.deploy.json`;
   const deploymentPath = path.join(outputDir, deploymentFileName);
 
   await writeFile(
@@ -445,6 +515,12 @@ async function main(): Promise<void> {
 
   const configDir = path.resolve(arguments_.configDir);
   const outputDir = path.resolve(arguments_.outputDir);
+  const globalConfigPath = path.resolve(arguments_.globalConfig);
+
+  // Load GCONFIG before discovery or output creation so an invalid global
+  // configuration cannot leave behind partially generated deployment files.
+  const globalConfiguration =
+    await loadGlobalConfiguration(globalConfigPath);
   const configurationFiles = await findConfigurationFiles(configDir);
 
   await mkdir(outputDir, { recursive: true });
@@ -453,6 +529,7 @@ async function main(): Promise<void> {
     const deploymentPath = await processConfiguration(
       configurationFile,
       outputDir,
+      globalConfiguration.assets,
     );
     console.log(`Created ${deploymentPath}`);
   }
