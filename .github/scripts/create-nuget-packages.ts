@@ -153,7 +153,7 @@ async function main(): Promise<void> {
 
     await mkdir(outputDir, { recursive: true });
     console.log(
-      `Packing ${configuration.packageId} v${arguments_.releaseVersion} ...`,
+      `Packing ${configuration.packageId} v${arguments_.releaseVersion}`,
     );
 
     await runUipPack(

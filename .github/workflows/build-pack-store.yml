@@ -51,7 +51,7 @@ jobs:
         -   name: Generate Deployment Configurations
             run: |
                 cd ${{ env.DIR_DEPLOYMENT}}
-                node ${{ env.DIR_SCRIPTS}}/generate-deployment-configs.ts --config-dir ${{ env.DIR_CONFIGS }} --output-dir ${{ env.DIR_GENERATED }} --global-config ${{ env.DIR_CONFIGS }}/global.deploy.json
+                node ${{ env.DIR_SCRIPTS}}/generate-deployment-configurations.ts --config-dir ${{ env.DIR_CONFIGS }} --output-dir ${{ env.DIR_GENERATED }} --global-config ${{ env.DIR_CONFIGS }}/global.deploy.json
             
         -   name: Build the Project
             run: uip rpa build ${{ env.DIR_RPA_SIMULACRUM }} 
