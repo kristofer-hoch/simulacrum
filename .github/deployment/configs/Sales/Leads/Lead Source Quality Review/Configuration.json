@@ -1,0 +1,335 @@
+﻿{
+    "document_type":  "automation_hub_data_information",
+    "schema_version":  "1.0",
+    "generated_at":  "2026-07-09T19:22:01.5349215Z",
+    "automation":  {
+                       "automation_id":  "SALES-003",
+                       "automation_name":  "Lead Source Quality Review",
+                       "process_id":  "50",
+                       "category_path":  {
+                                             "category_1":  "Sales",
+                                             "category_2":  "Leads",
+                                             "category_3":  ""
+                                         },
+                       "execution_model":  {
+                                               "classification":  "transactional",
+                                               "confidence":  "high",
+                                               "rationale":  "Processes independent requests, records, or exceptions where each item can succeed, fail, or be retried separately.",
+                                               "queueing_recommendation":  "Use queue items with one transaction per business record and route exceptions to human review."
+                                           },
+                       "description":  "Review new leads for source quality, missing fields, duplicates, and routing exceptions before sales assignment."
+                   },
+    "applications":  [
+{
+                             "application_name":  "Salesforce",
+                             "assignment_scope":  "automation_idea",
+                             "source":  "Automation Hub application assignment"
+                         },
+                         {
+                             "application_name":  "ZoomInfo",
+                             "assignment_scope":  "automation_idea",
+                             "source":  "Automation Hub application assignment"
+                         }
+                     ],
+    "data_sources":  [
+                         {
+                             "source_id":  "sales_003_salesforce_sales",
+                             "source_type":  "application",
+                             "application":  "Salesforce",
+                             "data_object":  "Lead, Account, Opportunity, Deal Desk fields",
+                             "location":  "Salesforce: Leads, Opportunities, and Deal Desk objects",
+                             "mailbox":  "",
+                             "owner_group":  "Sales Operations",
+                             "usage":  "Lead, routing, opportunity, and deal context.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "sales_003_zoominfo_leads",
+                             "source_type":  "application",
+                             "application":  "ZoomInfo",
+                             "data_object":  "Lead enrichment and firmographic data",
+                             "location":  "ZoomInfo: lead enrichment export/API",
+                             "mailbox":  "",
+                             "owner_group":  "Sales Operations",
+                             "usage":  "Lead enrichment and source quality context.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "sales_003_sales_sharepoint",
+                             "source_type":  "file_location",
+                             "application":  "Microsoft SharePoint",
+                             "data_object":  "Lead source exports, deal desk intake files",
+                             "location":  "SharePoint: /sites/SalesOps/Shared Documents/Automation Hub Inputs/",
+                             "mailbox":  "",
+                             "owner_group":  "Sales Operations",
+                             "usage":  "Operational source files and generated review outputs.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "sales_003_sales_mailbox",
+                             "source_type":  "mailbox",
+                             "application":  "Microsoft Outlook",
+                             "data_object":  "Sales Operations Requests",
+                             "location":  "Exchange Online shared mailbox",
+                             "mailbox":  "sales-ops@uipath.com",
+                             "owner_group":  "Sales Operations",
+                             "usage":  "Inbound lead, sales ops, and deal desk requests.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         }
+                     ],
+    "primary_entities":  [
+                             "lead_source_quality_review_id",
+                             "lead_or_opportunity_id",
+                             "account_name"
+                         ],
+    "input_schema":  {
+                         "schema_name":  "lead_source_quality_review_input",
+                         "schema_version":  "1.0",
+                         "schema_type":  "transaction_record",
+                         "sources":  [
+                                         "Salesforce",
+                                         "ZoomInfo",
+                                         "Microsoft SharePoint",
+                                         "Microsoft Outlook"
+                                     ],
+                         "records":  [
+                                         {
+                                             "name":  "lead_source_quality_review_work_item",
+                                             "description":  "Primary business record or batch consumed by Lead Source Quality Review.",
+                                             "grain":  "one transaction or work item"
+                                         }
+                                     ],
+                         "fields":  [
+                                        {
+                                            "name":  "lead_source_quality_review_id",
+                                            "type":  "string",
+                                            "required":  true,
+                                            "description":  "Unique identifier for the lead source quality review work item.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "source_system",
+                                            "type":  "string",
+                                            "required":  true,
+                                            "description":  "System or channel where the input record originated.",
+                                            "examples":  [
+                                                             "Leads"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "submitted_at",
+                                            "type":  "datetime",
+                                            "required":  true,
+                                            "description":  "Timestamp when the source record or batch was created.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "requestor_email",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Business user, owner, or requestor associated with the work item.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "business_unit",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Business area associated with the record.",
+                                            "examples":  [
+                                                             "Sales"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "priority",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Business priority or urgency level.",
+                                            "examples":  [
+                                                             "low",
+                                                             "medium",
+                                                             "high"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "lead_or_opportunity_id",
+                                            "type":  "string",
+                                            "required":  true,
+                                            "description":  "Lead, opportunity, or deal desk request identifier.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "account_name",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Prospect or customer account name.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "sales_owner_email",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Sales owner or deal owner.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "stage",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Lead, opportunity, or deal stage.",
+                                            "examples":  [
+
+                                                         ]
+                                        }
+                                    ]
+                     },
+    "output_schema":  {
+                          "schema_name":  "lead_source_quality_review_output",
+                          "schema_version":  "1.0",
+                          "schema_type":  "transaction_result",
+                          "destinations":  [
+                                               "CRM lead or opportunity update",
+                                               "sales operations queue",
+                                               "owner notification"
+                                           ],
+                          "records":  [
+                                          {
+                                              "name":  "lead_source_quality_review_result",
+                                              "description":  "Primary output generated by Lead Source Quality Review.",
+                                              "grain":  "one processed transaction or decision"
+                                          }
+                                      ],
+                          "fields":  [
+                                         {
+                                             "name":  "automation_run_id",
+                                             "type":  "string",
+                                             "required":  true,
+                                             "description":  "Unique run identifier for auditability.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "processed_at",
+                                             "type":  "datetime",
+                                             "required":  true,
+                                             "description":  "Timestamp when the automation processed the record or batch.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "processing_status",
+                                             "type":  "string",
+                                             "required":  true,
+                                             "description":  "Final processing status.",
+                                             "examples":  [
+                                                              "completed",
+                                                              "exception",
+                                                              "needs_review"
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "confidence_score",
+                                             "type":  "number",
+                                             "required":  false,
+                                             "description":  "Confidence score for classification, extraction, or recommendation.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "exception_reason",
+                                             "type":  "string",
+                                             "required":  false,
+                                             "description":  "Reason the item was routed to exception handling.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "target_queue_or_owner",
+                                             "type":  "string",
+                                             "required":  false,
+                                             "description":  "Queue, team, or owner selected by the automation.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "decision",
+                                             "type":  "string",
+                                             "required":  true,
+                                             "description":  "Decision, classification, validation result, or routing output.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "next_action_due_at",
+                                             "type":  "datetime",
+                                             "required":  false,
+                                             "description":  "Due date for follow-up action when required.",
+                                             "examples":  [
+
+                                                          ]
+                                         }
+                                     ]
+                      },
+    "business_process_specific_kpis":  [
+                                           {
+                                               "name":  "routing_or_decision_accuracy",
+                                               "definition":  "Share of automated decisions accepted without reassignment or correction.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           },
+                                           {
+                                               "name":  "lead_or_deal_completeness_rate",
+                                               "definition":  "Share of leads, opportunities, or deal desk requests with required data populated.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           },
+                                           {
+                                               "name":  "sales_handoff_sla_rate",
+                                               "definition":  "Share of routed leads or sales requests handed off within SLA.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           },
+                                           {
+                                               "name":  "high_risk_item_detection_rate",
+                                               "definition":  "Share of high-risk records correctly identified for review or escalation.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           },
+                                           {
+                                               "name":  "business_exception_rate",
+                                               "definition":  "Percentage of records requiring human review for business-rule reasons.",
+                                               "unit":  "percent",
+                                               "target_direction":  "lower"
+                                           },
+                                           {
+                                               "name":  "first_pass_completion_rate",
+                                               "definition":  "Percentage of records completed without rework or manual correction.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           }
+                                       ],
+    "validation":  {
+                       "has_input_schema":  true,
+                       "has_output_schema":  true,
+                       "kpi_count":  6,
+                       "application_count":  2,
+                       "data_source_count":  4
+                   }
+}

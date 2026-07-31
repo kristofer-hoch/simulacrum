@@ -1,0 +1,384 @@
+{
+  "document_type": "automation_hub_data_information",
+  "schema_version": "1.0",
+  "generated_on": "2026-07-25",
+  "automation": {
+    "automation_id": "59",
+    "automation_name": "Simulacrum - Automation Execution Model Simulator",
+    "process_id": 59,
+    "process_slug": "simulacrum---automation-execution-model-simulator",
+    "category_path": {
+      "category_1": "COE Operations",
+      "category_2": "Automation Engineering",
+      "category_3": "Simulation and Validation",
+      "category_ids": [
+        513,
+        514,
+        515
+      ]
+    },
+    "idea_type": "CoE-driven idea",
+    "phase": "Assessment",
+    "status": "Awaiting Review",
+    "description": "Provide the Automation Center of Excellence with a reusable UiPath runtime simulator that converts configuration-driven, agent-generated records into realistic single-job or transactional executions. The simulator exercises Orchestrator assets, queues, stop requests, retries, application and data-source delays, business and system exceptions, structured logs, and UiPath Insights mappings without requiring production system integrations.",
+    "execution_model": {
+      "classification": "transactional",
+      "rationale": "The complete capability processes independent, queue-friendly records through dispatcher and performer entry points. The single-job entry point remains a supported bounded scenario of the same capability.",
+      "queueing_recommendation": "Use transactional execution for volume, retry, and queue-behavior validation. Use single-job execution for bounded demonstrations."
+    }
+  },
+  "applications": [
+    {
+      "application_id": 26,
+      "application_name": "UiPath Orchestrator",
+      "application_version": "Cloud",
+      "application_language": "English",
+      "usage": "Assets, jobs, queues, transaction status, stop requests, package processes, and folder context."
+    },
+    {
+      "application_id": 27,
+      "application_name": "UiPath Agents",
+      "application_version": "Cloud",
+      "application_language": "English",
+      "usage": "Produces representative input records from the automation data-information configuration."
+    },
+    {
+      "application_id": 28,
+      "application_name": "UiPath Insights",
+      "application_version": "Cloud",
+      "application_language": "English",
+      "usage": "Receives mapped custom string, number, date/time, and ZIP-code fields through structured logging."
+    }
+  ],
+  "data_sources": [
+    {
+      "source_id": "simulacrum_orchestrator_assets",
+      "source_type": "application",
+      "application": "UiPath Orchestrator",
+      "data_object": "Configuration, InsightsDataMap, DataAgentFolder, and DataAgentName text assets",
+      "location": "Target Orchestrator folder",
+      "owner_group": "UiPath Platform Engineering",
+      "usage": "Supplies automation metadata, execution-model settings, schemas, KPI definitions, source mappings, and data-agent routing.",
+      "confirmation_status": "implemented"
+    },
+    {
+      "source_id": "simulacrum_agent_records",
+      "source_type": "application",
+      "application": "UiPath Agents",
+      "data_object": "Synthetic input_records collection",
+      "location": "Configured DataAgentFolder and DataAgentName process",
+      "owner_group": "Automation Engineering",
+      "usage": "Generates schema-aligned representative records without production source-system integrations.",
+      "confirmation_status": "implemented"
+    },
+    {
+      "source_id": "simulacrum_orchestrator_queue",
+      "source_type": "application",
+      "application": "UiPath Orchestrator",
+      "data_object": "Queue items and transaction results",
+      "location": "Queue derived from the deployed process name with spaces removed",
+      "owner_group": "UiPath Platform Engineering",
+      "usage": "Supports independent transactional dispatch, consumption, exception classification, retry behavior, and status tracking.",
+      "confirmation_status": "implemented_for_transactional_scenarios"
+    },
+    {
+      "source_id": "simulacrum_execution_telemetry",
+      "source_type": "dashboard",
+      "application": "UiPath Insights",
+      "data_object": "Structured process logs and custom variables",
+      "location": "UiPath Insights",
+      "owner_group": "Automation Center of Excellence",
+      "usage": "Provides scenario evidence and KPI-ready operational telemetry.",
+      "confirmation_status": "implemented_with_measurement_gaps"
+    }
+  ],
+  "input_schema": {
+    "schema_name": "simulacrum_execution_input",
+    "schema_version": "1.0",
+    "schema_type": "transaction",
+    "description": "Logical run input assembled from Orchestrator assets and the configured data-agent output.",
+    "properties": {
+      "automation_id": {
+        "type": "string",
+        "source": "Configuration asset"
+      },
+      "automation_name": {
+        "type": "string",
+        "source": "Active Orchestrator job process name"
+      },
+      "execution_model": {
+        "type": "string",
+        "enum": [
+          "single_job",
+          "transactional"
+        ],
+        "source": "Configuration asset"
+      },
+      "applications": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "source": "Configuration asset"
+      },
+      "data_sources": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "source": "Configuration asset"
+      },
+      "data_agent_folder": {
+        "type": "string",
+        "source": "DataAgentFolder asset"
+      },
+      "data_agent_name": {
+        "type": "string",
+        "source": "DataAgentName asset"
+      },
+      "insights_data_map": {
+        "type": "object",
+        "source": "InsightsDataMap asset"
+      },
+      "input_records": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "source": "Configured UiPath data-agent process"
+      },
+      "source_exported_at": {
+        "type": "string",
+        "format": "date-time",
+        "source": "Data-agent run metadata"
+      }
+    },
+    "required": [
+      "automation_id",
+      "automation_name",
+      "execution_model",
+      "applications",
+      "data_sources",
+      "data_agent_folder",
+      "data_agent_name",
+      "input_records"
+    ]
+  },
+  "output_schema": {
+    "schema_name": "simulacrum_execution_result",
+    "schema_version": "1.0",
+    "schema_type": "transaction_result",
+    "description": "Target structured run summary combining queue state, processing outcomes, exceptions, and telemetry evidence.",
+    "properties": {
+      "automation_run_id": {
+        "type": "string"
+      },
+      "execution_model": {
+        "type": "string",
+        "enum": [
+          "single_job",
+          "transactional"
+        ]
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "completed",
+          "completed_with_exceptions",
+          "failed",
+          "stopped"
+        ]
+      },
+      "records_received": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "records_processed": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "records_successful": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "records_failed": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "queue_items_created": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "cycle_time_seconds": {
+        "type": "number",
+        "minimum": 0
+      },
+      "stop_requested": {
+        "type": "boolean"
+      },
+      "results": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "transaction_reference": {
+              "type": "string"
+            },
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "successful",
+                "business_exception",
+                "application_exception"
+              ]
+            },
+            "attempt_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "exception_type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "exception_message": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "requires_human_review": {
+              "type": "boolean"
+            },
+            "insights_logged": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "transaction_reference",
+            "outcome",
+            "requires_human_review",
+            "insights_logged"
+          ]
+        }
+      }
+    },
+    "required": [
+      "automation_run_id",
+      "execution_model",
+      "status",
+      "records_received",
+      "records_processed",
+      "records_successful",
+      "records_failed",
+      "cycle_time_seconds"
+    ],
+    "implementation_status": "partially_implemented",
+    "implementation_note": "Queue-item status, exception classification, standard logs, and Insights mappings exist. A consolidated run-summary artifact and explicit counts, attempt counts, timing, and telemetry flags remain hardening work."
+  },
+  "business_process_specific_kpis": [
+    {
+      "kpi_name": "Scenario Provisioning Lead Time",
+      "definition": "Average engineering hours required to configure and run the first representative validation scenario for a candidate automation.",
+      "calculation": "sum(hours_from_request_to_first_successful_scenario) / candidate_automations_tested",
+      "unit": "hours",
+      "direction": "lower_is_better",
+      "target": "<= 1.5 hours per candidate",
+      "source_fields": [
+        "candidate_automation_id",
+        "scenario_requested_at",
+        "first_successful_scenario_at"
+      ],
+      "reporting_cadence": "monthly",
+      "owner_group": "Automation Engineering"
+    },
+    {
+      "kpi_name": "Execution Model Validation Coverage",
+      "definition": "Percent of candidates for which execution model, stop behavior, exception path, and retry or queue behavior were exercised before production integration.",
+      "calculation": "candidates_with_completed_validation_checklist / candidates_using_simulacrum",
+      "unit": "percent",
+      "direction": "higher_is_better",
+      "target": ">= 95%",
+      "source_fields": [
+        "candidate_automation_id",
+        "validation_checklist_status"
+      ],
+      "reporting_cadence": "monthly",
+      "owner_group": "Automation Center of Excellence"
+    },
+    {
+      "kpi_name": "Queue Record Reconciliation Accuracy",
+      "definition": "Percent of generated transactional records reconciled to exactly one queue item and one terminal transaction outcome.",
+      "calculation": "records_with_one_queue_item_and_one_terminal_outcome / generated_transactional_records",
+      "unit": "percent",
+      "direction": "higher_is_better",
+      "target": "100%",
+      "source_fields": [
+        "transaction_reference",
+        "queue_item_id",
+        "terminal_status"
+      ],
+      "reporting_cadence": "per scenario and monthly",
+      "owner_group": "UiPath Platform Engineering"
+    },
+    {
+      "kpi_name": "Failure Classification Accuracy",
+      "definition": "Percent of injected failure scenarios recorded with the expected business or application exception classification.",
+      "calculation": "failures_with_expected_classification / injected_failures",
+      "unit": "percent",
+      "direction": "higher_is_better",
+      "target": "100%",
+      "source_fields": [
+        "expected_exception_type",
+        "actual_exception_type"
+      ],
+      "reporting_cadence": "per scenario and monthly",
+      "owner_group": "Automation Engineering"
+    },
+    {
+      "kpi_name": "Telemetry Completeness Rate",
+      "definition": "Percent of processed records containing all mandatory standard log fields and configured, source-present Insights custom fields.",
+      "calculation": "records_with_complete_required_telemetry / records_processed",
+      "unit": "percent",
+      "direction": "higher_is_better",
+      "target": ">= 99%",
+      "source_fields": [
+        "transaction_reference",
+        "required_standard_fields_present",
+        "required_custom_fields_present"
+      ],
+      "reporting_cadence": "weekly",
+      "owner_group": "Automation Center of Excellence"
+    }
+  ],
+  "automation_hub_assessment": {
+    "primary_goal": "Productivity",
+    "process_changes_next_six_months": "Minor change expected",
+    "application_changes_next_six_months": "Minor change expected",
+    "frequency": "Monthly",
+    "volume_per_frequency": 8,
+    "volume_scope": "Per company",
+    "number_of_employees": 1,
+    "current_average_processing_time_minutes": 360,
+    "digital_input_percent": 100,
+    "structured_digital_input": ">=80%",
+    "scanned_input": false,
+    "automation_potential_percent": 98,
+    "ease_of_implementation_percent": 91,
+    "estimated_benefit_hours_per_year": 564,
+    "estimated_benefit_ftes": 0.27,
+    "assessment_note": "Volume and handling-time values are working planning assumptions submitted for Process Owner review."
+  },
+  "validation": {
+    "identity_verified": true,
+    "category_verified": true,
+    "applications_verified": true,
+    "input_schema_present": true,
+    "output_schema_present": true,
+    "kpi_count": 5,
+    "application_count": 3,
+    "data_source_count": 4
+  }
+}

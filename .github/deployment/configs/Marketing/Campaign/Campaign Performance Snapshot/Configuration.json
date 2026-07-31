@@ -1,0 +1,346 @@
+﻿{
+    "document_type":  "automation_hub_data_information",
+    "schema_version":  "1.0",
+    "generated_at":  "2026-07-09T19:22:01.5318947Z",
+    "automation":  {
+                       "automation_id":  "MARKETING-004",
+                       "automation_name":  "Campaign Performance Snapshot",
+                       "process_id":  "49",
+                       "category_path":  {
+                                             "category_1":  "Marketing",
+                                             "category_2":  "Campaign",
+                                             "category_3":  ""
+                                         },
+                       "execution_model":  {
+                                               "classification":  "single_job",
+                                               "confidence":  "high",
+                                               "rationale":  "Produces a consolidated artifact or analysis from a bounded set of inputs in one scheduled or on-demand run.",
+                                               "queueing_recommendation":  "Run as a single job with checkpointed steps and a consolidated completion report."
+                                           },
+                       "description":  "Compile campaign performance metrics from source exports and prepare a snapshot for weekly marketing review."
+                   },
+    "applications":  [
+                         {
+                             "application_name":  "Asana",
+                             "assignment_scope":  "automation_idea",
+                             "source":  "Automation Hub application assignment"
+                         },
+                         {
+                             "application_name":  "Bynder Digital Asset Management",
+                             "assignment_scope":  "automation_idea",
+                             "source":  "Automation Hub application assignment"
+                         },
+                         {
+                             "application_name":  "Marketo Engage",
+                             "assignment_scope":  "automation_idea",
+                             "source":  "Automation Hub application assignment"
+                         }
+                     ],
+    "data_sources":  [
+                         {
+                             "source_id":  "marketing_004_asana_marketing",
+                             "source_type":  "application",
+                             "application":  "Asana",
+                             "data_object":  "Campaign tasks, launch checklist, research requests",
+                             "location":  "Asana: Marketing Operations projects",
+                             "mailbox":  "",
+                             "owner_group":  "Marketing Operations",
+                             "usage":  "Campaign, brand, research, and launch task context.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "marketing_004_dam_assets",
+                             "source_type":  "application",
+                             "application":  "Bynder Digital Asset Management",
+                             "data_object":  "Brand assets and metadata",
+                             "location":  "Bynder: Brand asset library",
+                             "mailbox":  "",
+                             "owner_group":  "Brand Operations",
+                             "usage":  "Brand asset request and routing source data.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "marketing_004_marketing_sharepoint",
+                             "source_type":  "file_location",
+                             "application":  "Microsoft SharePoint",
+                             "data_object":  "Campaign plans, launch checklists, performance snapshots",
+                             "location":  "SharePoint: /sites/MarketingOps/Shared Documents/Automation Hub Inputs/",
+                             "mailbox":  "",
+                             "owner_group":  "Marketing Operations",
+                             "usage":  "Reference plans, launch files, and generated report storage.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "marketing_004_marketing_mailbox",
+                             "source_type":  "mailbox",
+                             "application":  "Microsoft Outlook",
+                             "data_object":  "Marketing Operations Requests",
+                             "location":  "Exchange Online shared mailbox",
+                             "mailbox":  "marketing-ops@uipath.com",
+                             "owner_group":  "Marketing Operations",
+                             "usage":  "Inbound campaign, brand, and research requests.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "marketing_004_campaign_platform",
+                             "source_type":  "application",
+                             "application":  "Marketo Engage",
+                             "data_object":  "Campaign performance and launch metadata",
+                             "location":  "Marketo: campaign program reports",
+                             "mailbox":  "",
+                             "owner_group":  "Marketing Operations",
+                             "usage":  "Campaign readiness, launch, and performance inputs.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         }
+                     ],
+    "primary_entities":  [
+                             "campaign_performance_snapshot_id",
+                             "campaign_id",
+                             "asset_or_channel"
+                         ],
+    "input_schema":  {
+                         "schema_name":  "campaign_performance_snapshot_input",
+                         "schema_version":  "1.0",
+                         "schema_type":  "batch_object",
+                         "sources":  [
+                                         "Asana",
+                                         "Bynder Digital Asset Management",
+                                         "Microsoft SharePoint",
+                                         "Microsoft Outlook",
+                                         "Marketo Engage"
+                                     ],
+                         "records":  [
+                                         {
+                                             "name":  "campaign_performance_snapshot_work_item",
+                                             "description":  "Primary business record or batch consumed by Campaign Performance Snapshot.",
+                                             "grain":  "one automation run or batch"
+                                         }
+                                     ],
+                         "fields":  [
+                                        {
+                                            "name":  "campaign_performance_snapshot_id",
+                                            "type":  "string",
+                                            "required":  true,
+                                            "description":  "Unique identifier for the campaign performance snapshot work item.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "source_system",
+                                            "type":  "string",
+                                            "required":  true,
+                                            "description":  "System or channel where the input record originated.",
+                                            "examples":  [
+                                                             "Campaign"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "submitted_at",
+                                            "type":  "datetime",
+                                            "required":  true,
+                                            "description":  "Timestamp when the source record or batch was created.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "requestor_email",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Business user, owner, or requestor associated with the work item.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "business_unit",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Business area associated with the record.",
+                                            "examples":  [
+                                                             "Marketing"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "priority",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Business priority or urgency level.",
+                                            "examples":  [
+                                                             "low",
+                                                             "medium",
+                                                             "high"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "campaign_id",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Campaign, brand, or research request identifier.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "asset_or_channel",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Marketing asset, channel, or program involved.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "launch_date",
+                                            "type":  "date",
+                                            "required":  false,
+                                            "description":  "Campaign launch or requested completion date.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "audience_segment",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Target audience or segment.",
+                                            "examples":  [
+
+                                                         ]
+                                        }
+                                    ]
+                     },
+    "output_schema":  {
+                          "schema_name":  "campaign_performance_snapshot_output",
+                          "schema_version":  "1.0",
+                          "schema_type":  "batch_result",
+                          "destinations":  [
+                                               "shared report folder",
+                                               "email or Teams notification",
+                                               "system note or attachment"
+                                           ],
+                          "records":  [
+                                          {
+                                              "name":  "campaign_performance_snapshot_result",
+                                              "description":  "Primary output generated by Campaign Performance Snapshot.",
+                                              "grain":  "one output package or run summary"
+                                          }
+                                      ],
+                          "fields":  [
+                                         {
+                                             "name":  "automation_run_id",
+                                             "type":  "string",
+                                             "required":  true,
+                                             "description":  "Unique run identifier for auditability.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "processed_at",
+                                             "type":  "datetime",
+                                             "required":  true,
+                                             "description":  "Timestamp when the automation processed the record or batch.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "processing_status",
+                                             "type":  "string",
+                                             "required":  true,
+                                             "description":  "Final processing status.",
+                                             "examples":  [
+                                                              "completed",
+                                                              "exception",
+                                                              "needs_review"
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "confidence_score",
+                                             "type":  "number",
+                                             "required":  false,
+                                             "description":  "Confidence score for classification, extraction, or recommendation.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "exception_reason",
+                                             "type":  "string",
+                                             "required":  false,
+                                             "description":  "Reason the item was routed to exception handling.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "summary_artifact_url",
+                                             "type":  "string",
+                                             "required":  true,
+                                             "description":  "URL or file reference for the generated packet, brief, report, or summary.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "records_analyzed",
+                                             "type":  "integer",
+                                             "required":  true,
+                                             "description":  "Number of records included in the batch output.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "recommended_actions",
+                                             "type":  "array\u003cstring\u003e",
+                                             "required":  false,
+                                             "description":  "Recommended business follow-up actions.",
+                                             "examples":  [
+
+                                                          ]
+                                         }
+                                     ]
+                      },
+    "business_process_specific_kpis":  [
+                                           {
+                                               "name":  "artifact_completeness_score",
+                                               "definition":  "Share of required sections or data points present in the generated output.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           },
+                                           {
+                                               "name":  "campaign_or_asset_readiness_rate",
+                                               "definition":  "Share of campaign or asset requests ready without missing inputs.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           },
+                                           {
+                                               "name":  "launch_blocker_detection_rate",
+                                               "definition":  "Share of launch blockers identified before planned campaign date.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           },
+                                           {
+                                               "name":  "business_exception_rate",
+                                               "definition":  "Percentage of records requiring human review for business-rule reasons.",
+                                               "unit":  "percent",
+                                               "target_direction":  "lower"
+                                           },
+                                           {
+                                               "name":  "first_pass_completion_rate",
+                                               "definition":  "Percentage of records completed without rework or manual correction.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           }
+                                       ],
+    "validation":  {
+                       "has_input_schema":  true,
+                       "has_output_schema":  true,
+                       "kpi_count":  5,
+                       "application_count":  3,
+                       "data_source_count":  5
+                   }
+}

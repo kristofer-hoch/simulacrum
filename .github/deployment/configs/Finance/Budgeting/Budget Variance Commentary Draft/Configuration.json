@@ -1,0 +1,327 @@
+﻿{
+    "document_type":  "automation_hub_data_information",
+    "schema_version":  "1.0",
+    "generated_at":  "2026-07-09T19:22:01.2928957Z",
+    "automation":  {
+                       "automation_id":  "FINANCE-001",
+                       "automation_name":  "Budget Variance Commentary Draft",
+                       "process_id":  "14",
+                       "category_path":  {
+                                             "category_1":  "Finance",
+                                             "category_2":  "Budgeting",
+                                             "category_3":  ""
+                                         },
+                       "execution_model":  {
+                                               "classification":  "transactional",
+                                               "confidence":  "medium",
+                                               "rationale":  "Processes independent requests, records, or exceptions where each item can succeed, fail, or be retried separately.",
+                                               "queueing_recommendation":  "Use queue items with one transaction per business record and route exceptions to human review."
+                                           },
+                       "description":  "Compare actuals to budget, identify material variances, and draft commentary for finance review."
+                   },
+    "applications":  [
+                         {
+                             "application_name":  "SAP S/4HANA Finance",
+                             "assignment_scope":  "automation_idea",
+                             "source":  "Automation Hub application assignment"
+                         },
+                         {
+                             "application_name":  "SAP Concur",
+                             "assignment_scope":  "automation_idea",
+                             "source":  "Automation Hub application assignment"
+                         }
+                     ],
+    "data_sources":  [
+                         {
+                             "source_id":  "finance_001_erp_finance",
+                             "source_type":  "application",
+                             "application":  "SAP S/4HANA Finance",
+                             "data_object":  "GL, cost center, vendor, invoice, and payroll journal records",
+                             "location":  "SAP: Finance operational tables and reports",
+                             "mailbox":  "",
+                             "owner_group":  "Finance Operations",
+                             "usage":  "Financial transaction, coding, and variance context.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "finance_001_expense_platform",
+                             "source_type":  "application",
+                             "application":  "SAP Concur",
+                             "data_object":  "Expense Reports and Receipts",
+                             "location":  "Concur: Expense report export/API",
+                             "mailbox":  "",
+                             "owner_group":  "Finance Operations",
+                             "usage":  "Expense exceptions, receipt matching, and policy validation.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "finance_001_finance_sharepoint",
+                             "source_type":  "file_location",
+                             "application":  "Microsoft SharePoint",
+                             "data_object":  "Budget, forecast, and policy files",
+                             "location":  "SharePoint: /sites/FinanceOps/Shared Documents/Automation Hub Inputs/",
+                             "mailbox":  "",
+                             "owner_group":  "Finance Operations",
+                             "usage":  "Reference files, policy lookup, budget submissions, and output storage.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         },
+                         {
+                             "source_id":  "finance_001_finance_mailbox",
+                             "source_type":  "mailbox",
+                             "application":  "Microsoft Outlook",
+                             "data_object":  "Finance Operations Requests",
+                             "location":  "Exchange Online shared mailbox",
+                             "mailbox":  "finance-ops@uipath.com",
+                             "owner_group":  "Finance Operations",
+                             "usage":  "Inbound exception requests, invoice questions, and payroll cutoff communications.",
+                             "confirmation_status":  "proposed_to_confirm"
+                         }
+                     ],
+    "primary_entities":  [
+                             "budget_variance_commentary_draft_id"
+                         ],
+    "input_schema":  {
+                         "schema_name":  "budget_variance_commentary_draft_input",
+                         "schema_version":  "1.0",
+                         "schema_type":  "transaction_record",
+                         "sources":  [
+                                         "SAP S/4HANA Finance",
+                                         "SAP Concur",
+                                         "Microsoft SharePoint",
+                                         "Microsoft Outlook"
+                                     ],
+                         "records":  [
+                                         {
+                                             "name":  "budget_variance_commentary_draft_work_item",
+                                             "description":  "Primary business record or batch consumed by Budget Variance Commentary Draft.",
+                                             "grain":  "one transaction or work item"
+                                         }
+                                     ],
+                         "fields":  [
+                                        {
+                                            "name":  "budget_variance_commentary_draft_id",
+                                            "type":  "string",
+                                            "required":  true,
+                                            "description":  "Unique identifier for the budget variance commentary draft work item.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "source_system",
+                                            "type":  "string",
+                                            "required":  true,
+                                            "description":  "System or channel where the input record originated.",
+                                            "examples":  [
+                                                             "Budgeting"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "submitted_at",
+                                            "type":  "datetime",
+                                            "required":  true,
+                                            "description":  "Timestamp when the source record or batch was created.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "requestor_email",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Business user, owner, or requestor associated with the work item.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "business_unit",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Business area associated with the record.",
+                                            "examples":  [
+                                                             "Finance"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "priority",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Business priority or urgency level.",
+                                            "examples":  [
+                                                             "low",
+                                                             "medium",
+                                                             "high"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "cost_center",
+                                            "type":  "string",
+                                            "required":  true,
+                                            "description":  "Cost center or department code.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "amount",
+                                            "type":  "number",
+                                            "required":  false,
+                                            "description":  "Financial amount under review.",
+                                            "examples":  [
+
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "currency",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "ISO currency code.",
+                                            "examples":  [
+                                                             "USD"
+                                                         ]
+                                        },
+                                        {
+                                            "name":  "policy_reference",
+                                            "type":  "string",
+                                            "required":  false,
+                                            "description":  "Policy, budget, or payroll rule used for validation.",
+                                            "examples":  [
+
+                                                         ]
+                                        }
+                                    ]
+                     },
+    "output_schema":  {
+                          "schema_name":  "budget_variance_commentary_draft_output",
+                          "schema_version":  "1.0",
+                          "schema_type":  "transaction_result",
+                          "destinations":  [
+                                               "finance review queue",
+                                               "ERP update",
+                                               "approver notification"
+                                           ],
+                          "records":  [
+                                          {
+                                              "name":  "budget_variance_commentary_draft_result",
+                                              "description":  "Primary output generated by Budget Variance Commentary Draft.",
+                                              "grain":  "one processed transaction or decision"
+                                          }
+                                      ],
+                          "fields":  [
+                                         {
+                                             "name":  "automation_run_id",
+                                             "type":  "string",
+                                             "required":  true,
+                                             "description":  "Unique run identifier for auditability.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "processed_at",
+                                             "type":  "datetime",
+                                             "required":  true,
+                                             "description":  "Timestamp when the automation processed the record or batch.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "processing_status",
+                                             "type":  "string",
+                                             "required":  true,
+                                             "description":  "Final processing status.",
+                                             "examples":  [
+                                                              "completed",
+                                                              "exception",
+                                                              "needs_review"
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "confidence_score",
+                                             "type":  "number",
+                                             "required":  false,
+                                             "description":  "Confidence score for classification, extraction, or recommendation.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "exception_reason",
+                                             "type":  "string",
+                                             "required":  false,
+                                             "description":  "Reason the item was routed to exception handling.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "target_queue_or_owner",
+                                             "type":  "string",
+                                             "required":  false,
+                                             "description":  "Queue, team, or owner selected by the automation.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "decision",
+                                             "type":  "string",
+                                             "required":  true,
+                                             "description":  "Decision, classification, validation result, or routing output.",
+                                             "examples":  [
+
+                                                          ]
+                                         },
+                                         {
+                                             "name":  "next_action_due_at",
+                                             "type":  "datetime",
+                                             "required":  false,
+                                             "description":  "Due date for follow-up action when required.",
+                                             "examples":  [
+
+                                                          ]
+                                         }
+                                     ]
+                      },
+    "business_process_specific_kpis":  [
+                                           {
+                                               "name":  "routing_or_decision_accuracy",
+                                               "definition":  "Share of automated decisions accepted without reassignment or correction.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           },
+                                           {
+                                               "name":  "financial_policy_match_rate",
+                                               "definition":  "Share of records matched to a valid finance, payroll, budget, or expense policy.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           },
+                                           {
+                                               "name":  "variance_or_exception_resolution_cycle_time",
+                                               "definition":  "Average elapsed time to resolve flagged finance exceptions.",
+                                               "unit":  "hours",
+                                               "target_direction":  "lower"
+                                           },
+                                           {
+                                               "name":  "business_exception_rate",
+                                               "definition":  "Percentage of records requiring human review for business-rule reasons.",
+                                               "unit":  "percent",
+                                               "target_direction":  "lower"
+                                           },
+                                           {
+                                               "name":  "first_pass_completion_rate",
+                                               "definition":  "Percentage of records completed without rework or manual correction.",
+                                               "unit":  "percent",
+                                               "target_direction":  "higher"
+                                           }
+                                       ],
+    "validation":  {
+                       "has_input_schema":  true,
+                       "has_output_schema":  true,
+                       "kpi_count":  5,
+                       "application_count":  2,
+                       "data_source_count":  4
+                   }
+}

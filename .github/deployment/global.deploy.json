@@ -1,0 +1,16 @@
+{
+    "assets": [
+        {
+            "name": "DataAgentFolder",
+            "description": "Folder containing the deployed data-agent process",
+            "type": "Text",
+            "value": "COE Operations/Automation Engineering/Simulation and Validation/Simulacrum Data Agent"
+        },
+        {
+            "name": "DataAgentName",
+            "description": "Name of the deployed data-agent process",
+            "type": "Text",
+            "value": "Simulacrum Data Agent"
+        }
+    ]
+}
