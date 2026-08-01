@@ -6,75 +6,44 @@ on:
   workflow_dispatch:
 permissions:
     contents: write
-env: 
-    NODE_VERSION: 24
-    DIR_DEPLOYMENT: .github/deployment
-    DIR_SCRIPTS: .github/scripts
-    DIR_CONFIGS: .github/deployment/configs
-    DIR_GENERATED: .github/deployment/generated-configs
-    DIR_DISTRIBUTION: dist
-    DIR_RPA_SIMULACRUM: rpa-workflows/Simulacrum 
 jobs:
+    init:
+        uses: ./.github/workflows/reusable-uipath-cli-initialization.yml
+        with:
+            environment: Development
+            runs-on: ubuntu-latest
+
     build-pack-store:
-        environment: Development
-        runs-on: ubuntu-latest
+        needs: init
+        environment: ${{ needs.init.outputs.environment }}
+        runs-on: ${{ needs.init.outputs.runs-on }}
         steps:
-        -   name: Set up Node.js
-            uses: actions/setup-node@v4
-            with:
-                node-version: 'latest' # You can also use 'current' or '*'
-                check-latest: true     
-        -   name: Verify Node.js Version
-            run: node -v    
-
-        -   name: Install UiPath CLI
-            run: npm install -g @uipath/cli
-            
-        -   name: Pre-Install UiPath CLI Tools
-            run: |
-                uip tools install @uipath/orchestrator-tool
-                uip tools install @uipath/rpa-tool
-
-        -   name: UiPath Login
-            run: |
-                echo "Logging into UiPath Orchestrator..."
-                echo "uip login  --authority ${{ vars.UIPATH_AUTHORITY }} --organization ${{ vars.UIPATH_ORGANIZATION }} --tenant ${{ vars.UIPATH_TENANT_NAME }}"
-                uip login \
-                    --authority ${{ vars.UIPATH_AUTHORITY }} \
-                    --organization ${{ vars.UIPATH_ORGANIZATION }} \
-                    --tenant ${{ vars.UIPATH_TENANT_NAME }}  \
-                    --client-id "${{ secrets.UIPATH_CLIENT_ID }}" \
-                    --client-secret "${{ secrets.UIPATH_SECRET }}"
-
-        -   name: Create Distribution Directory
-            run: mkdir -p ${{ env.DIR_DISTRIBUTION }}
-
         -   name: Check out repository
             uses: actions/checkout@v4
 
         -   name: Create Version Tag
             id: create-tag
-            run: node ${{ env.DIR_SCRIPTS }}/create-release-tag.ts
+            run: node ${{ needs.init.outputs.dir-scripts }}/create-release-tag.ts
             
         -   name: Generate Deployment Configurations
             run: |
-                node ${{ env.DIR_SCRIPTS}}/generate-deployment-configurations.ts \
-                    --config-dir ${{ env.DIR_CONFIGS }} \
-                    --output-dir ${{ env.DIR_GENERATED }} \
-                    --global-config ${{ env.DIR_DEPLOYMENT }}/global.deploy.json
+                node ${{ needs.init.outputs.dir-scripts }}/generate-deployment-configurations.ts \
+                    --config-dir ${{ needs.init.outputs.dir-configs }} \
+                    --output-dir ${{ needs.init.outputs.dir-generated }} \
+                    --global-config ${{ needs.init.outputs.dir-deployment }}/global.deploy.json
             
         -   name: Build the Project
-            run: uip rpa build ${{ env.DIR_RPA_SIMULACRUM }} 
-                
+            run: uip rpa build ${{ needs.init.outputs.dir-rpa-simulacrum }} 
+
         -   name: Pack the Project
             run: |
-                node ${{ env.DIR_SCRIPTS }}/create-nuget-packages.ts \
-                    --config-dir ${{ env.DIR_GENERATED }} \
-                    --project-dir ${{ env.DIR_RPA_SIMULACRUM }} \
+                node ${{ needs.init.outputs.dir-scripts }}/create-nuget-packages.ts \
+                    --config-dir ${{ needs.init.outputs.dir-generated }} \
+                    --project-dir ${{ needs.init.outputs.dir-rpa-simulacrum }} \
                     --release-version ${{ env.RELEASE_TAG }}
 
         -   name: Store Artifacts
             uses: actions/upload-artifact@v4
             with:
                 name: rpa-artifacts-${{ env.RELEASE_TAG }}
-                path: ${{ env.DIR_DISTRIBUTION }}/**
+                path: ${{ needs.init.outputs.dir-distribution }}/**

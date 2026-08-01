@@ -1,0 +1,30 @@
+name: Publish Artifacts to Orchestrator
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to use for publishing artifacts'
+        required: true
+        default: 'Development'
+
+permissions:
+    contents: write
+jobs:
+    init:
+        uses: ./.github/workflows/reusable-uipath-cli-initialization.yml
+        with:
+            environment: ${{ github.event.inputs.environment }}
+
+    publish-artifacts:
+        needs: init
+        runs-on: ${{ needs.init.outputs.runs-on }}
+        environment: ${{ github.event.inputs.environment }}
+        steps:
+        -   name: Checkout Repository
+            uses: actions/checkout@v4
+
+        -   name: Initialize UiPath CLI Environment
+            uses: ./.github/workflows/reusable-uipath-cli-initialization.yml
+            with:
+                environment: ${{ github.event.inputs.environment }}

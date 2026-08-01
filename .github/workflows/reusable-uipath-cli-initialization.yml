@@ -1,0 +1,101 @@
+name: UiPath CLI Environment Initialization
+on:
+    workflow_call:
+        inputs:
+            environment:
+                required: true
+                type: string
+            runs-on:
+                required: true
+                type: string
+        
+        outputs: 
+            environment:
+                value: ${{ inputs.environment }}
+            runs-on:
+                value: ${{ inputs.runs-on }}
+            dir-deployment:
+                value: ${{ jobs.environment-variables.outputs.dir-deployment }}
+            dir-scripts:
+                value: ${{ jobs.environment-variables.outputs.dir-scripts }}
+            dir-configs:
+                value: ${{ jobs.environment-variables.outputs.dir-configs }}
+            dir-generated:
+                value: ${{ jobs.environment-variables.outputs.dir-generated }}
+            dir-distribution:
+                value: ${{ jobs.environment-variables.outputs.dir-distribution }}
+            dir-rpa-simulacrum:
+                value: ${{ jobs.environment-variables.outputs.dir-rpa-simulacrum }}
+
+jobs:
+    environment-variables:
+        runs-on: ${{ inputs.runs-on }}
+        environment: ${{ inputs.environment }}
+        outputs:
+            dir-deployment: ${{ steps.dir-deployment.outputs.value }}
+            dir-scripts: ${{ steps.dir-scripts.outputs.value }}
+            dir-configs: ${{ steps.dir-configs.outputs.value }}
+            dir-generated: ${{ steps.dir-generated.outputs.value }}
+            dir-distribution: ${{ steps.dir-distribution.outputs.value }}
+            dir-rpa-simulacrum: ${{ steps.dir-rpa-simulacrum.outputs.value }}
+        steps:
+        -   id: dir-deployment
+            run: echo "dir-deployment=.github/deployment" >> $GITHUB_ENV
+
+        -   id: dir-scripts
+            run: echo "dir-scripts=.github/scripts" >> $GITHUB_ENV
+
+        -   id: dir-configs
+            run: echo "dir-configs=.github/deployment/configs" >> $GITHUB_ENV
+
+        -   id: dir-generated
+            run: echo "dir-generated=.github/deployment/generated-configs" >> $GITHUB_ENV
+
+        -   id: dir-distribution
+            run: echo "dir-distribution=generated-artifacts" >> $GITHUB_ENV
+
+        -   id: dir-rpa-simulacrum
+            run: echo "dir-rpa-simulacrum=rpa-workflows/Simulacrum" >> $GITHUB_ENV
+
+    directories:
+        needs: environment-variables
+        runs-on: ${{ inputs.runs-on }}
+        environment: ${{ inputs.environment }}
+        steps:
+        -   name: Create Directories
+            run: mkdir -p ${{ needs.environment-variables.outputs.dir-deployment }}
+
+    uipath-cli:
+        needs: environment-variables
+        runs-on: ${{ inputs.runs-on }}
+        environment: ${{ inputs.environment }}
+        steps:        
+        -   name: Set up Node.js
+            uses: actions/setup-node@v4
+            with:
+                node-version: 'latest' # You can also use 'current' or '*'
+                check-latest: true     
+        -   name: Verify Node.js Version
+            run: node -v    
+
+        -   name: Install UiPath CLI
+            run: npm install -g @uipath/cli
+            
+        -   name: Pre-Install UiPath CLI Tools
+            run: |
+                uip tools install @uipath/orchestrator-tool
+                uip tools install @uipath/rpa-tool
+
+        -   name: UiPath Login
+            run: |
+                echo "Logging into UiPath Orchestrator..."
+                echo "uip login  --authority ${{ vars.UIPATH_AUTHORITY }} --organization ${{ vars.UIPATH_ORGANIZATION }} --tenant ${{ vars.UIPATH_TENANT_NAME }}"
+                uip login \
+                    --authority ${{ vars.UIPATH_AUTHORITY }} \
+                    --organization ${{ vars.UIPATH_ORGANIZATION }} \
+                    --tenant ${{ vars.UIPATH_TENANT_NAME }}  \
+                    --client-id "${{ secrets.UIPATH_CLIENT_ID }}" \
+                    --client-secret "${{ secrets.UIPATH_SECRET }}"
+
+
+    
