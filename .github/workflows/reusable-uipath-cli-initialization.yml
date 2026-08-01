@@ -33,40 +33,37 @@ jobs:
         environment: ${{ inputs.environment }}
         outputs:
             runs-on: ${{ inputs.runs-on }}
-            dir-deployment: ${{ steps.dir-deployment.outputs.value }}
-            dir-scripts: ${{ steps.dir-scripts.outputs.value }}
-            dir-configs: ${{ steps.dir-configs.outputs.value }}
-            dir-generated: ${{ steps.dir-generated.outputs.value }}
-            dir-distribution: ${{ steps.dir-distribution.outputs.value }}
-            dir-rpa-simulacrum: ${{ steps.dir-rpa-simulacrum.outputs.value }}
+            dir-deployment: ${{ steps.paths.outputs.dir-deployment }}
+            dir-scripts: ${{ steps.paths.outputs.dir-scripts }}
+            dir-configs: ${{ steps.paths.outputs.dir-configs }}
+            dir-generated: ${{ steps.paths.outputs.dir-generated }}
+            dir-distribution: ${{ steps.paths.outputs.dir-distribution }}
+            dir-rpa-simulacrum: ${{ steps.paths.outputs.dir-rpa-simulacrum }}
+
         steps:
-        -   id: dir-deployment
-            run: echo "dir-deployment=.github/deployment" >> $GITHUB_ENV
-
-        -   id: dir-scripts
-            run: echo "dir-scripts=.github/scripts" >> $GITHUB_ENV
-
-        -   id: dir-configs
-            run: echo "dir-configs=.github/deployment/configs" >> $GITHUB_ENV
-
-        -   id: dir-generated
-            run: echo "dir-generated=.github/deployment/generated-configs" >> $GITHUB_ENV
-
-        -   id: dir-distribution
-            run: echo "dir-distribution=./artifact-distribution" >> $GITHUB_ENV
-
-        -   id: dir-rpa-simulacrum
-            run: echo "dir-rpa-simulacrum=rpa-workflows/Simulacrum" >> $GITHUB_ENV
+        -   name: Define directory outputs
+            id: paths
+            shell: bash
+            run: |
+                echo "dir-deployment=.github/deployment" >> "$GITHUB_OUTPUT"
+                echo "dir-scripts=.github/scripts" >> "$GITHUB_OUTPUT"
+                echo "dir-configs=.github/deployment/configs" >> "$GITHUB_OUTPUT"
+                echo "dir-generated=.github/deployment/generated-configs" >> "$GITHUB_OUTPUT"
+                echo "dir-distribution=artifact-distribution" >> "$GITHUB_OUTPUT"
+                echo "dir-rpa-simulacrum=rpa-workflows/Simulacrum" >> "$GITHUB_OUTPUT"
 
     directories:
         needs: environment-variables
         runs-on: ${{ inputs.runs-on }}
         environment: ${{ inputs.environment }}
         steps:
-        -   name: Create directory 
+        -   name: Create distribution directory
+            env:
+                DIR_DISTRIBUTION: >-
+                    ${{ needs.environment-variables.outputs.dir-distribution }}
             run: |
-                echo Directory: ${{ outputs.dir-distribution }}
-                mkdir -p ${{ outputs.dir-distribution }}
+                echo "Directory: $DIR_DISTRIBUTION"
+                mkdir -p "$DIR_DISTRIBUTION"
 
     uipath-cli:
         needs: environment-variables
