@@ -11,7 +11,6 @@ jobs:
         uses: ./.github/workflows/reusable-uipath-cli-initialization.yml
         with:
             environment: Development
-            runs-on: ubuntu-latest
 
     build-pack-store:
         needs: init

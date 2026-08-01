@@ -6,14 +6,14 @@ on:
                 required: true
                 type: string
             runs-on:
-                required: true
                 type: string
+                default: ubuntu-latest
         
         outputs: 
             environment:
                 value: ${{ inputs.environment }}
             runs-on:
-                value: ${{ inputs.runs-on }}
+                value: ${{ jobs.environment-variables.outputs.runs-on }}
             dir-deployment:
                 value: ${{ jobs.environment-variables.outputs.dir-deployment }}
             dir-scripts:
@@ -32,6 +32,7 @@ jobs:
         runs-on: ${{ inputs.runs-on }}
         environment: ${{ inputs.environment }}
         outputs:
+            runs-on: ${{ inputs.runs-on }}
             dir-deployment: ${{ steps.dir-deployment.outputs.value }}
             dir-scripts: ${{ steps.dir-scripts.outputs.value }}
             dir-configs: ${{ steps.dir-configs.outputs.value }}
@@ -52,7 +53,7 @@ jobs:
             run: echo "dir-generated=.github/deployment/generated-configs" >> $GITHUB_ENV
 
         -   id: dir-distribution
-            run: echo "dir-distribution=artifact-distribution" >> $GITHUB_ENV
+            run: echo "dir-distribution=./artifact-distribution" >> $GITHUB_ENV
 
         -   id: dir-rpa-simulacrum
             run: echo "dir-rpa-simulacrum=rpa-workflows/Simulacrum" >> $GITHUB_ENV
