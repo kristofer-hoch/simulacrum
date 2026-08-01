@@ -65,8 +65,8 @@ jobs:
         steps:
         -   name: Create directory 
             run: |
-                echo Directory: ${{ needs.environment-variables.outputs.dir-distribution }}
-                mkdir -p ${{ needs.environment-variables.outputs.dir-distribution }}
+                echo Directory: ${{ outputs.dir-distribution }}
+                mkdir -p ${{ outputs.dir-distribution }}
 
     uipath-cli:
         needs: environment-variables
