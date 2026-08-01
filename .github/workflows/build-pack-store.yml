@@ -17,6 +17,17 @@ jobs:
         environment: ${{ needs.init.outputs.environment }}
         runs-on: ${{ needs.init.outputs.runs-on }}
         steps:
+        -   name: Log Variables
+            run: |
+                echo "Environment: ${{ needs.init.outputs.environment }}"
+                echo "Runs-on: ${{ needs.init.outputs.runs-on }}"
+                echo "Dir Deployment: ${{ needs.init.outputs.dir-deployment }}"
+                echo "Dir Scripts: ${{ needs.init.outputs.dir-scripts }}"
+                echo "Dir Configs: ${{ needs.init.outputs.dir-configs }}"
+                echo "Dir Generated: ${{ needs.init.outputs.dir-generated }}"
+                echo "Dir Distribution: ${{ needs.init.outputs.dir-distribution }}"
+                echo "Dir RPA Simulacrum: ${{ needs.init.outputs.dir-rpa-simulacrum }}"
+
         -   name: Check out repository
             uses: actions/checkout@v4
 
