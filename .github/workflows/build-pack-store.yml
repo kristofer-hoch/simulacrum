@@ -21,6 +21,21 @@ jobs:
         -   name: Check out repository
             uses: actions/checkout@v4
 
+        -   name: UiPath Login
+            run: |
+                echo "Logging into UiPath Orchestrator..."
+                echo "uip login  --authority ${{ vars.UIPATH_AUTHORITY }} --organization ${{ vars.UIPATH_ORGANIZATION }} --tenant ${{ vars.UIPATH_TENANT_NAME }}"
+                uip login \
+                    --authority ${{ vars.UIPATH_AUTHORITY }} \
+                    --organization ${{ vars.UIPATH_ORGANIZATION }} \
+                    --tenant ${{ vars.UIPATH_TENANT_NAME }}  \
+                    --client-id "${{ secrets.UIPATH_CLIENT_ID }}" \
+                    --client-secret "${{ secrets.UIPATH_SECRET }}"
+
+        -   name: Build the Project
+            run: uip rpa build ${{ needs.init.outputs.dir-rpa-simulacrum }} 
+
+
         -   name: Create Version Tag
             id: create-tag
             run: node ${{ needs.init.outputs.dir-scripts }}/create-release-tag.ts
@@ -31,9 +46,6 @@ jobs:
                     --config-dir ${{ needs.init.outputs.dir-configs }} \
                     --output-dir ${{ needs.init.outputs.dir-generated }} \
                     --global-config ${{ needs.init.outputs.dir-deployment }}/global.deploy.json
-            
-        -   name: Build the Project
-            run: uip rpa build ${{ needs.init.outputs.dir-rpa-simulacrum }} 
 
         -   name: Pack the Project
             run: |

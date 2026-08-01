@@ -52,7 +52,7 @@ jobs:
             run: echo "dir-generated=.github/deployment/generated-configs" >> $GITHUB_ENV
 
         -   id: dir-distribution
-            run: echo "dir-distribution=generated-artifacts" >> $GITHUB_ENV
+            run: echo "dir-distribution=artifact-distribution" >> $GITHUB_ENV
 
         -   id: dir-rpa-simulacrum
             run: echo "dir-rpa-simulacrum=rpa-workflows/Simulacrum" >> $GITHUB_ENV
@@ -62,8 +62,10 @@ jobs:
         runs-on: ${{ inputs.runs-on }}
         environment: ${{ inputs.environment }}
         steps:
-        -   name: Create Directories
-            run: mkdir -p ${{ needs.environment-variables.outputs.dir-deployment }}
+        -   name: Create directory 
+            run: |
+                echo Directory: ${{ needs.environment-variables.outputs.dir-distribution }}
+                mkdir -p ${{ needs.environment-variables.outputs.dir-distribution }}
 
     uipath-cli:
         needs: environment-variables
@@ -86,16 +88,6 @@ jobs:
                 uip tools install @uipath/orchestrator-tool
                 uip tools install @uipath/rpa-tool
 
-        -   name: UiPath Login
-            run: |
-                echo "Logging into UiPath Orchestrator..."
-                echo "uip login  --authority ${{ vars.UIPATH_AUTHORITY }} --organization ${{ vars.UIPATH_ORGANIZATION }} --tenant ${{ vars.UIPATH_TENANT_NAME }}"
-                uip login \
-                    --authority ${{ vars.UIPATH_AUTHORITY }} \
-                    --organization ${{ vars.UIPATH_ORGANIZATION }} \
-                    --tenant ${{ vars.UIPATH_TENANT_NAME }}  \
-                    --client-id "${{ secrets.UIPATH_CLIENT_ID }}" \
-                    --client-secret "${{ secrets.UIPATH_SECRET }}"
 
 
     
