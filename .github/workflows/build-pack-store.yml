@@ -112,10 +112,11 @@ jobs:
                     --outfile ${{ needs.init.outputs.release-metadata }}
         -   name: Push Release Tag
             env:
-                RELEASE_TAG: ${{ env.RELEASE_TAG }}
+                RELEASE_TAG: 
             run: |
                 git config --global user.name "github-actions[bot]"
                 git config --global user.email "github-actions[bot]@users.noreply.github.com"
-                git commit -m "Add release metadata for $RELEASE_TAG"
-                git tag "$RELEASE_TAG"
-                git push origin "$RELEASE_TAG"
+                git commit -m "Add release metadata for ${{ env.RELEASE_TAG }}" ${{ needs.init.outputs.release-metadata }}
+                git tag ${{ env.RELEASE_TAG }}"
+                git push origin ${{ env.RELEASE_TAG }}"
+        
