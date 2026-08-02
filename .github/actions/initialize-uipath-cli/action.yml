@@ -1,0 +1,24 @@
+name: UiPath CLI Environment Initialization
+description: Installs pinned Node.js, UiPath CLI, Orchestrator, and RPA tools.
+
+runs:
+    using: composite
+    steps:
+    -   name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+            check-latest: true
+
+    -   name: Verify Node.js version
+        shell: bash
+        run: node --version
+
+    -   name: Install UiPath CLI
+        shell: bash
+        run: npm install --global @uipath/cli
+            
+    -   name: Pre-Install UiPath CLI Tools
+        shell: bash
+        run: |
+            uip tools install @uipath/orchestrator-tool --output json
+            uip tools install @uipath/rpa-tool --output json

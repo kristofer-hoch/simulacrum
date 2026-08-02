@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { appendFile } from "node:fs/promises";
-import { spawnSync } from "node:child_process";
 
 /** Format a date as YYYY.MM.DD.HHMMSS using the runner's local time. */
 function formatReleaseTag(date: Date): string {
@@ -13,24 +12,6 @@ function formatReleaseTag(date: Date): string {
     pad(date.getDate()),
     `${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`,
   ].join(".");
-}
-
-/** Run a Git command and preserve its output in the workflow log. */
-function runGit(arguments_: string[]): void {
-  const result = spawnSync("git", arguments_, {
-    stdio: "inherit",
-    shell: false,
-  });
-
-  if (result.error) {
-    throw result.error;
-  }
-
-  if (result.status !== 0) {
-    throw new Error(
-      `git ${arguments_.join(" ")} failed with exit code ${result.status}`,
-    );
-  }
 }
 
 async function main(): Promise<void> {
@@ -46,11 +27,6 @@ async function main(): Promise<void> {
 
   await appendFile(githubEnvPath, `RELEASE_TAG=${releaseTag}\n`, "utf8");
   console.log(`Set RELEASE_TAG=${releaseTag}`);
-
-  runGit(["tag", releaseTag]);
-  runGit(["push", "origin", releaseTag]);
-
-  console.log(`Created and pushed Git tag ${releaseTag}`);
 }
 
 main().catch((error: unknown) => {

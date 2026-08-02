@@ -1,4 +1,4 @@
-name: UiPath CLI Environment Initialization
+name: Buildscript Variable Initialization
 on:
     workflow_call:
         inputs:
@@ -11,7 +11,7 @@ on:
         
         outputs: 
             environment:
-                value: ${{ inputs.environment }}
+                value: ${{ jobs.environment-variables.outputs.environment }}
             runs-on:
                 value: ${{ jobs.environment-variables.outputs.runs-on }}
             dir-deployment:
@@ -26,6 +26,8 @@ on:
                 value: ${{ jobs.environment-variables.outputs.dir-distribution }}
             dir-rpa-simulacrum:
                 value: ${{ jobs.environment-variables.outputs.dir-rpa-simulacrum }}
+            release-metadata:
+                value: ${{ jobs.environment-variables.outputs.release-metadata }}
 
 jobs:
     environment-variables:
@@ -33,6 +35,8 @@ jobs:
         environment: ${{ inputs.environment }}
         outputs:
             runs-on: ${{ inputs.runs-on }}
+            environment: ${{ inputs.environment }}
+            release-metadata: ${{ steps.paths.outputs.release-metadata }}
             dir-deployment: ${{ steps.paths.outputs.dir-deployment }}
             dir-scripts: ${{ steps.paths.outputs.dir-scripts }}
             dir-configs: ${{ steps.paths.outputs.dir-configs }}
@@ -41,7 +45,7 @@ jobs:
             dir-rpa-simulacrum: ${{ steps.paths.outputs.dir-rpa-simulacrum }}
 
         steps:
-        -   name: Define directory outputs
+        -   name: Define directory paths
             id: paths
             shell: bash
             run: |
@@ -51,40 +55,7 @@ jobs:
                 echo "dir-generated=.github/deployment/generated-configs" >> "$GITHUB_OUTPUT"
                 echo "dir-distribution=artifact-distribution" >> "$GITHUB_OUTPUT"
                 echo "dir-rpa-simulacrum=rpa-workflows/Simulacrum" >> "$GITHUB_OUTPUT"
-
-    directories:
-        needs: environment-variables
-        runs-on: ${{ inputs.runs-on }}
-        environment: ${{ inputs.environment }}
-        steps:
-        -   name: Create distribution directory
-            env:
-                DIR_DISTRIBUTION: >-
-                    ${{ needs.environment-variables.outputs.dir-distribution }}
-            run: |
-                echo "Directory: $DIR_DISTRIBUTION"
-                mkdir -p "$DIR_DISTRIBUTION"
-
-    uipath-cli:
-        needs: environment-variables
-        runs-on: ${{ inputs.runs-on }}
-        environment: ${{ inputs.environment }}
-        steps:        
-        -   name: Set up Node.js
-            uses: actions/setup-node@v4
-            with:
-                node-version: 'latest' # You can also use 'current' or '*'
-                check-latest: true     
-        -   name: Verify Node.js Version
-            run: node -v    
-
-        -   name: Install UiPath CLI
-            run: npm install -g @uipath/cli
-            
-        -   name: Pre-Install UiPath CLI Tools
-            run: |
-                uip tools install @uipath/orchestrator-tool
-                uip tools install @uipath/rpa-tool
+                echo "release-metadata=.github/deployment/release-metadata.json" >> "$GITHUB_OUTPUT"
 
 
 

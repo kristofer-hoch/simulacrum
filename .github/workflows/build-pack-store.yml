@@ -1,19 +1,31 @@
 name: Build, Pack, and Store Artifacts
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
   workflow_dispatch:
 permissions:
-    contents: write
+    contents: read
+
+concurrency:
+    group: build-pack-store-${{ github.ref }}
+    cancel-in-progress: false
+
 jobs:
     init:
-        uses: ./.github/workflows/reusable-uipath-cli-initialization.yml
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: ./.github/workflows/reusable-variables.yml
         with:
             environment: Development
 
     build-pack-store:
+        if: ${{ github.event_name != 'pull_request' }}
         needs: init
+        permissions:
+            contents: write
         environment: ${{ needs.init.outputs.environment }}
         runs-on: ${{ needs.init.outputs.runs-on }}
         steps:
@@ -21,33 +33,44 @@ jobs:
             run: |
                 echo "Environment: ${{ needs.init.outputs.environment }}"
                 echo "Runs-on: ${{ needs.init.outputs.runs-on }}"
-                echo "Dir Deployment: ${{ needs.init.outputs.dir-deployment }}"
-                echo "Dir Scripts: ${{ needs.init.outputs.dir-scripts }}"
-                echo "Dir Configs: ${{ needs.init.outputs.dir-configs }}"
-                echo "Dir Generated: ${{ needs.init.outputs.dir-generated }}"
-                echo "Dir Distribution: ${{ needs.init.outputs.dir-distribution }}"
-                echo "Dir RPA Simulacrum: ${{ needs.init.outputs.dir-rpa-simulacrum }}"
+                echo "Directories:"
+                echo "Deployment: ${{ needs.init.outputs.dir-deployment }}"
+                echo "Scripts: ${{ needs.init.outputs.dir-scripts }}"
+                echo "Configs: ${{ needs.init.outputs.dir-configs }}"
+                echo "Generated: ${{ needs.init.outputs.dir-generated }}"
+                echo "Distribution: ${{ needs.init.outputs.dir-distribution }}"
+                echo "RPA Simulacrum: ${{ needs.init.outputs.dir-rpa-simulacrum }}"
 
         -   name: Check out repository
-            uses: actions/checkout@v4
+            uses: actions/checkout@v7
+
+        -   name: Initialize UiPath CLI Environment
+            uses: ./.github/actions/initialize-uipath-cli
 
         -   name: UiPath Login
+            env:
+                UIPATH_AUTHORITY: ${{ vars.UIPATH_AUTHORITY }}
+                UIPATH_ORGANIZATION: ${{ vars.UIPATH_ORGANIZATION }}
+                UIPATH_TENANT_NAME: ${{ vars.UIPATH_TENANT_NAME }}
+                UIPATH_CLIENT_ID: ${{ secrets.UIPATH_CLIENT_ID }}
+                UIPATH_SECRET: ${{ secrets.UIPATH_SECRET }}
             run: |
                 echo "Logging into UiPath Orchestrator..."
-                echo "uip login  --authority ${{ vars.UIPATH_AUTHORITY }} --organization ${{ vars.UIPATH_ORGANIZATION }} --tenant ${{ vars.UIPATH_TENANT_NAME }}"
                 uip login \
-                    --authority ${{ vars.UIPATH_AUTHORITY }} \
-                    --organization ${{ vars.UIPATH_ORGANIZATION }} \
-                    --tenant ${{ vars.UIPATH_TENANT_NAME }}  \
-                    --client-id "${{ secrets.UIPATH_CLIENT_ID }}" \
-                    --client-secret "${{ secrets.UIPATH_SECRET }}"
+                    --authority "$UIPATH_AUTHORITY" \
+                    --organization "$UIPATH_ORGANIZATION" \
+                    --tenant "$UIPATH_TENANT_NAME" \
+                    --client-id env.UIPATH_CLIENT_ID \
+                    --client-secret env.UIPATH_SECRET \
+                    --output json
 
         -   name: Build the Project
-            run: uip rpa build ${{ needs.init.outputs.dir-rpa-simulacrum }} 
+            run: |
+                uip rpa build "${{ needs.init.outputs.dir-rpa-simulacrum }}" \
+                --log-level Warn \
+                --output json 
 
-
-        -   name: Create Version Tag
-            id: create-tag
+        -   name: Generate Release Version
             run: node ${{ needs.init.outputs.dir-scripts }}/create-release-tag.ts
             
         -   name: Generate Deployment Configurations
@@ -65,7 +88,33 @@ jobs:
                     --release-version ${{ env.RELEASE_TAG }}
 
         -   name: Store Artifacts
-            uses: actions/upload-artifact@v4
+            id: store-artifacts
+            env:
+                RELEASE_TAG: ${{ env.RELEASE_TAG }}
+            uses: actions/upload-artifact@v7
             with:
                 name: rpa-artifacts-${{ env.RELEASE_TAG }}
-                path: ${{ needs.init.outputs.dir-distribution }}/**
+                path: dist/${{ env.RELEASE_TAG }}/**
+                if-no-files-found: error
+
+        -   name: Create Release Metadata
+            env:
+                TAG: ${{ env.RELEASE_TAG }}
+                ID: ${{ steps.store-artifacts.outputs.artifact-id }}
+                URL: ${{ steps.store-artifacts.outputs.artifact-url }}
+                DIGEST: ${{ steps.store-artifacts.outputs.artifact-digest }}
+            run: |
+                node ${{ needs.init.outputs.dir-scripts }}/create-release-metadata.ts \
+                    --tag $TAG \
+                    --artifact-id $ID \
+                    --artifact-url $URL \
+                    --artifact-digest $DIGEST \
+                    --output-file ${{ needs.init.outputs.release-metadata }}
+        -   name: Push Release Tag
+            env:
+                RELEASE_TAG: ${{ env.RELEASE_TAG }}
+            run: |
+                git add ${{ needs.init.outputs.release-metadata }}
+                git commit -m "Add release metadata for $RELEASE_TAG"
+                git tag "$RELEASE_TAG"
+                git push origin "$RELEASE_TAG"
