@@ -106,10 +106,10 @@ jobs:
             run: |
                 node ${{ needs.init.outputs.dir-scripts }}/create-deployment-metadata.ts \
                     --tag $TAG \
-                    --artifact-id $ID \
-                    --artifact-url $URL \
-                    --artifact-digest $DIGEST \
-                    --output-file ${{ needs.init.outputs.release-metadata }}
+                    --id $ID \
+                    --url $URL \
+                    --digest $DIGEST \
+                    --outfile ${{ needs.init.outputs.release-metadata }}
         -   name: Push Release Tag
             env:
                 RELEASE_TAG: ${{ env.RELEASE_TAG }}
