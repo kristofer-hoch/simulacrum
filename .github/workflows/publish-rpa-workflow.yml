@@ -95,5 +95,4 @@ jobs:
                 DEPLOY_SCRIPT: ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator.ts
                 CONFIG_FILE: ${{ runner.temp }}/deploy-orchestrator-config.json
                 ARTIFACT_DIR: ${{ needs.init.outputs.dir-distribution }}
-                RELEASE_TAG: ${{ inputs.release-tag }}
-            run: node "$DEPLOY_SCRIPT" "$ARTIFACT_DIR/$RELEASE_TAG" --config "$CONFIG_FILE"
+            run: node "$DEPLOY_SCRIPT" "$ARTIFACT_DIR" --config "$CONFIG_FILE"
