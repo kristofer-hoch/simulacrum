@@ -40,46 +40,13 @@ jobs:
 
         -   name: Read Release Metadata
             id: metadata
-            shell: bash
             env:
                 METADATA_FILE: ${{ needs.init.outputs.release-metadata }}
+                METADATA_READER: ${{ needs.init.outputs.dir-scripts }}/read-release-metadata.ts
             run: |
-                python - "$METADATA_FILE" "$GITHUB_OUTPUT" <<'PY'
-                import ast
-                import json
-                import sys
-
-                metadata_file, github_output = sys.argv[1:]
-                with open(metadata_file, encoding="utf-8") as file:
-                    contents = file.read()
-
-                try:
-                    metadata = json.loads(contents)
-                except json.JSONDecodeError:
-                    metadata = ast.literal_eval(contents)
-
-                required_fields = (
-                    "version",
-                    "run-id",
-                    "artifact-id",
-                    "artifact-url",
-                    "artifact-digest",
-                )
-                if not isinstance(metadata, dict):
-                    raise ValueError("Release metadata must be an object")
-
-                missing_fields = [
-                    field for field in required_fields if not metadata.get(field)
-                ]
-                if missing_fields:
-                    raise ValueError(
-                        f"Release metadata is missing required fields: {', '.join(missing_fields)}"
-                    )
-
-                with open(github_output, "a", encoding="utf-8") as output:
-                    for field in required_fields:
-                        print(f"{field}={metadata[field]}", file=output)
-                PY
+                node "$METADATA_READER" \
+                    --metadata-file "$METADATA_FILE" \
+                    --github-output "$GITHUB_OUTPUT"
         -   run: |
                 echo "version: ${{ steps.metadata.outputs.version}}" 
                 echo "run-id: ${{ steps.metadata.outputs.run-id}}"
