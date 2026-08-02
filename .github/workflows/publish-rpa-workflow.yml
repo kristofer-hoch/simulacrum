@@ -97,10 +97,15 @@ jobs:
             matrix:
                 dir: ${{ fromJSON(needs.download-artifacts.outputs.matrix) }}
         steps:
+        -   name: Checkout Repository
+            uses: actions/checkout@v7
+            with:
+                ref: '${{ inputs.release-tag }}'
+
         -   name: Initialize UiPath CLI Environment
             uses: ./.github/actions/initialize-uipath-cli
 
-        -   name: UiPath Login
+        -   name: Create Configuration File
             env:
                 UIPATH_AUTHORITY: ${{ vars.UIPATH_AUTHORITY }}
                 UIPATH_ORGANIZATION: ${{ vars.UIPATH_ORGANIZATION }}
@@ -108,20 +113,14 @@ jobs:
                 UIPATH_CLIENT_ID: ${{ secrets.UIPATH_CLIENT_ID }}
                 UIPATH_SECRET: ${{ secrets.UIPATH_SECRET }}
             run: |
-                echo "Logging into UiPath Orchestrator..."
-                uip login \
-                    --authority "$UIPATH_AUTHORITY" \
-                    --organization "$UIPATH_ORGANIZATION" \
-                    --tenant "$UIPATH_TENANT_NAME" \
-                    --client-id env.UIPATH_CLIENT_ID \
-                    --client-secret env.UIPATH_SECRET \
-                    --output json
+                echo "{'authority': '$UIPATH_AUTHORITY','organization': '$UIPATH_ORGANIZATION','tenant': '$UIPATH_TENANT_NAME','client-id': '$UIPATH_CLIENT_ID','client-secret': '$UIPATH_SECRET'}" > ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator-config.json
 
         -   name: Process Artifacts
             env:
                 ARTIFACT_DIR: ${{ matrix.dir }}
-                DEPLOY_SCRIPT: ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator.sh
+                DEPLOY_SCRIPT: ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator.ts
+                CONFIG_FILE: ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator-config.json
             run: |
                 echo "Processing artifacts in distribution directory..."
                 echo "Processing directory: $ARTIFACT_DIR"
-                sh "$DEPLOY_SCRIPT" "$ARTIFACT_DIR"
+                node "$DEPLOY_SCRIPT" "$ARTIFACT_DIR" --config "$CONFIG_FILE"

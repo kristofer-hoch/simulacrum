@@ -99,17 +99,13 @@ jobs:
 
         -   name: Create Release Metadata
             env:
+                RUNID: ${{ github.run_id }}
                 TAG: ${{ env.RELEASE_TAG }}
                 ID: ${{ steps.store-artifacts.outputs.artifact-id }}
                 URL: ${{ steps.store-artifacts.outputs.artifact-url }}
                 DIGEST: ${{ steps.store-artifacts.outputs.artifact-digest }}
             run: |
-                node ${{ needs.init.outputs.dir-scripts }}/create-deployment-metadata.ts \
-                    --tag $TAG \
-                    --id $ID \
-                    --url $URL \
-                    --digest $DIGEST \
-                    --outfile ${{ needs.init.outputs.release-metadata }}
+                echo "{'version': '$TAG','run-id': '$RUNID','artifact-id': '$ID','artifact-url': '$URL','artifact-digest': '$DIGEST'}" > ${{ needs.init.outputs.release-metadata }}
         -   name: Push Release Tag
             run: |
                 git config --global user.name "github-actions[bot]"
