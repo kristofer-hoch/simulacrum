@@ -27,20 +27,34 @@ jobs:
         needs: init
         runs-on: ${{ needs.init.outputs.runs-on }}
         environment: ${{ inputs.environment }}
+        outputs:
+            matrix: ${{ steps.dirs.outputs.matrix }}
         steps:
         -   name: Checkout Repository
-            uses: actions/checkout@v4
+            uses: actions/checkout@v7
             with:
                 ref: '${{ inputs.release-tag }}'
 
         -   name: Read Release Metadata
             id: metadata
-            uses: ActionsTools/read-json-action@main
-            with:
-                file_path: ${{ needs.init.outputs.release-metadata }}
+            shell: bash
+            env:
+                METADATA_FILE: ${{ needs.init.outputs.release-metadata }}
+            run: |
+                jq -e '
+                    .version and
+                    .["artifact-id"] and
+                    .["artifact-url"] and
+                    .["artifact-digest"]
+                ' "$METADATA_FILE" > /dev/null
+                {
+                    echo "version=$(jq -r '.version' "$METADATA_FILE")"
+                    echo "artifact-id=$(jq -r '.["artifact-id"]' "$METADATA_FILE")"
+                    echo "artifact-url=$(jq -r '.["artifact-url"]' "$METADATA_FILE")"
+                    echo "artifact-digest=$(jq -r '.["artifact-digest"]' "$METADATA_FILE")"
+                } >> "$GITHUB_OUTPUT"
         -   run: |
                 echo "version:${{ steps.metadata.outputs.version}}" 
-                echo "run-id:${{ steps.metadata.outputs.run-id}}" 
                 echo "artifact-id: ${{ steps.metadata.outputs.artifact-id}}" 
                 echo "artifact-url: ${{ steps.metadata.outputs.artifact-url}}" 
                 echo "artifact-digest: ${{ steps.metadata.outputs.artifact-digest}}"
@@ -68,9 +82,12 @@ jobs:
         
         -   name: Capture Distribution Directory Contents
             id: dirs
+            shell: bash
+            env:
+                DISTRIBUTION_DIR: ${{ needs.init.outputs.dir-distribution }}
             run: |
-                DIRS=$(find ${{ needs.init.outputs.dir-distribution }} -maxdepth 1 -type d -not -path '*/.*' -not -path '.' | jq -R -s -c 'split("\n") | del(.[] | select(. == ""))')
-                echo "matrix=$DIRS" >> $GITHUB_OUTPUT
+                DIRS=$(find "$DISTRIBUTION_DIR" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+                echo "matrix=$DIRS" >> "$GITHUB_OUTPUT"
     
     process-artifacts:
         needs: [init, download-artifacts]
@@ -101,10 +118,10 @@ jobs:
                     --output json
 
         -   name: Process Artifacts
+            env:
+                ARTIFACT_DIR: ${{ matrix.dir }}
+                DEPLOY_SCRIPT: ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator.sh
             run: |
                 echo "Processing artifacts in distribution directory..."
-                for dir in ${{ needs.download-artifacts.outputs.matrix }}; do
-                    echo "Processing directory: $dir"
-                    sh ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator.sh $dir
-                    # Add your artifact processing commands here
-                done
+                echo "Processing directory: $ARTIFACT_DIR"
+                sh "$DEPLOY_SCRIPT" "$ARTIFACT_DIR"
