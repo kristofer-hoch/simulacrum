@@ -39,15 +39,15 @@ jobs:
             with:
                 file_path: ${{ needs.init.outputs.release-metadata }}
         -   run: |
-                echo "version=${{ steps.metadata.outputs.version}}" 
-                echo "artifactId=${{ steps.metadata.outputs.artifact-id}}" 
-                echo "artifactUrl=${{ steps.metadata.outputs.artifact-url}}" 
-                echo "artifactDigest=${{ steps.metadata.outputs.artifact-digest}}"
+                echo "version:${{ steps.metadata.outputs.version}}" 
+                echo "artifact-id: ${{ steps.metadata.outputs.artifact-id}}" 
+                echo "artifact-url: ${{ steps.metadata.outputs.artifact-url}}" 
+                echo "artifact-digest: ${{ steps.metadata.outputs.artifact-digest}}"
 
         -   name: Download Release Artifacts
             uses: actions/download-artifact@v8
             with:
-                name: ${{ steps.metadata.outputs.artifact-id }}
+                artifact-ids: ${{ steps.metadata.outputs.artifact-id }}
                 path: ${{ needs.init.outputs.dir-distribution }}
         
         -   name: List Artifacts
