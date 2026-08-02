@@ -1,2 +1,3 @@
 **/*.*.deploy.json
 **/InsightsDataMap.json
+artifact-distribution/
