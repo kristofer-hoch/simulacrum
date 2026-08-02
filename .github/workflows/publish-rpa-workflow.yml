@@ -32,6 +32,23 @@ jobs:
             uses: actions/checkout@v4
             with:
                 ref: '${{ inputs.release-tag }}'
-                
-        -   name: Just Checking
-            run: cat ${{ needs.init.outputs.release-metadata }}
+
+        -   name: Read Release Metadata
+            id: metadata
+            uses: ActionsTools/read-json-action@main
+            with:
+                file_path: ${{ needs.init.outputs.release-metadata }}
+        -   run: |
+                echo "version=${{ steps.metadata.outputs.version}}" 
+                echo "artifactId=${{ steps.metadata.outputs.artifactId}}" 
+                echo "artifactUrl=${{ steps.metadata.outputs.artifactUrl}}" 
+                echo "artifactDigest=${{ steps.metadata.outputs.artifactDigest}}"
+
+        -   name: Download Release Artifacts
+            uses: actions/download-artifact@v8
+            with:
+                name: ${{ steps.metadata.outputs.artifactId }}
+                path: ${{ needs.init.outputs.dir-distribution }}
+        
+        -   name: List Artifacts
+            run: ls -R ${{ needs.init.outputs.dir-distribution }}
