@@ -104,7 +104,7 @@ jobs:
                 URL: ${{ steps.store-artifacts.outputs.artifact-url }}
                 DIGEST: ${{ steps.store-artifacts.outputs.artifact-digest }}
             run: |
-                node ${{ needs.init.outputs.dir-scripts }}/create-release-metadata.ts \
+                node ${{ needs.init.outputs.dir-scripts }}/create-deployment-metadata.ts \
                     --tag $TAG \
                     --artifact-id $ID \
                     --artifact-url $URL \
