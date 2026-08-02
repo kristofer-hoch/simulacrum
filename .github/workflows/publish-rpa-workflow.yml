@@ -47,7 +47,7 @@ jobs:
         -   name: Download Release Artifacts
             uses: actions/download-artifact@v8
             with:
-                artifact-ids: ${{ steps.metadata.outputs.artifact-id }}
+                name: rpa-artifacts-${{ steps.metadata.outputs.version }}
                 path: ${{ needs.init.outputs.dir-distribution }}
         
         -   name: List Artifacts
