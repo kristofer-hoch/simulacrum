@@ -556,13 +556,7 @@ async function resolveFeedArguments(
   if (!packageFeed) {
     return [];
   }
-  const feeds = await uipJson("or", "feeds", "list");
-  const feed = exactNamedItem(feeds, packageFeed);
-  const feedId = feed ? stringField(feed, "Id", "id") : undefined;
-  if (!feedId) {
-    throw new Error(`Package feed not found: ${packageFeed}`);
-  }
-  return ["--feed-id", feedId];
+  return ["--folder-path", packageFeed];
 }
 
 async function ensurePackage(
@@ -571,20 +565,17 @@ async function ensurePackage(
   packageVersion: string,
   feedArguments: string[],
 ): Promise<void> {
-  const packages = await uipJson(
+  const versions = await uipJson(
     "or",
     "packages",
-    "list",
-    "--search",
+    "versions",
     manifest.packageId,
     "--limit",
     "100",
     ...feedArguments,
   );
-  const exists = dataItems(packages).some(
-    (item) =>
-      (item.Id ?? item.id) === manifest.packageId &&
-      (item.Version ?? item.version) === packageVersion,
+  const exists = dataItems(versions).some(
+    (item) => (item.Version ?? item.version) === packageVersion,
   );
   if (exists) {
     log(`Package exists: ${manifest.packageId}:${packageVersion}`);
