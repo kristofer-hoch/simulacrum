@@ -1,0 +1,36 @@
+name: Publish Artifacts to Orchestrator
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to use for publishing artifacts'
+        required: true
+        default: 'Development'
+        type: environment
+      release-tag:
+        description: 'Release tag for the artifacts to publish'
+        required: true
+        type: string
+
+permissions:
+    actions: read
+    contents: read
+
+jobs:
+    init:
+        uses: ./.github/workflows/reusable-variables.yml
+        with:
+            environment: ${{ inputs.environment }}
+
+    publish-packages:
+        needs: init
+        runs-on: ${{ needs.init.outputs.runs-on }}
+        environment: ${{ inputs.environment }}
+        steps:
+        -   name: Checkout Repository
+            uses: actions/checkout@v4
+            with:
+                ref: '${{ inputs.release-tag }}'
+        -   name: Just Checking
+            run: cat ${{ needs.init.outputs.release-metadata }}

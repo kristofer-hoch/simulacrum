@@ -5,7 +5,7 @@ on:
       - main
   push:
     branches:
-      - main
+      - definitlynotmain
   workflow_dispatch:
 permissions:
     contents: read
