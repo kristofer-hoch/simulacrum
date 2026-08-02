@@ -40,6 +40,7 @@ jobs:
                 file_path: ${{ needs.init.outputs.release-metadata }}
         -   run: |
                 echo "version:${{ steps.metadata.outputs.version}}" 
+                echo "run-id:${{ steps.metadata.outputs.run-id}}" 
                 echo "artifact-id: ${{ steps.metadata.outputs.artifact-id}}" 
                 echo "artifact-url: ${{ steps.metadata.outputs.artifact-url}}" 
                 echo "artifact-digest: ${{ steps.metadata.outputs.artifact-digest}}"
@@ -68,7 +69,7 @@ jobs:
         -   name: Capture Distribution Directory Contents
             id: dirs
             run: |
-                DIRS=$(find . -maxdepth 1 -type d -not -path '*/.*' -not -path '.' | jq -R -s -c 'split("\n") | del(.[] | select(. == ""))')
+                DIRS=$(find ${{ needs.init.outputs.dir-distribution }} -maxdepth 1 -type d -not -path '*/.*' -not -path '.' | jq -R -s -c 'split("\n") | del(.[] | select(. == ""))')
                 echo "matrix=$DIRS" >> $GITHUB_OUTPUT
     
     process-artifacts:
