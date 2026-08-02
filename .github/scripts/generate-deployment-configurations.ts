@@ -64,16 +64,15 @@ interface ProcessDefinition {
 }
 
 /**
- * Assets may contain an inline value (global assets) or a valueFile
- * (automation-specific assets). Additional deployment properties are
- * preserved when copied from the global configuration.
+ * Automation-specific assets contain minified JSON text in value. Additional
+ * deployment properties are preserved when assets are copied from the global
+ * configuration.
  */
 interface DeploymentAsset {
   name: string;
   description: string;
   type: string;
   value?: unknown;
-  valueFile?: string;
   [property: string]: unknown;
 }
 
@@ -262,19 +261,6 @@ function validateConfiguration(value: unknown): Configuration {
   return configuration as Configuration;
 }
 
-/** Normalize generated paths so JSON remains portable across Windows and Linux. */
-function toPortablePath(filePath: string): string {
-  return filePath.split(path.sep).join("/");
-}
-
-/**
- * Asset valueFile paths are stored relative to the repository working
- * directory, which is also the expected working directory in CI.
- */
-function repositoryRelativePath(filePath: string): string {
-  return toPortablePath(path.relative(process.cwd(), filePath));
-}
-
 /**
  * A third-level category is valid only when its parent category is present.
  * This mirrors the hierarchy rules in Configuration.json.
@@ -300,8 +286,8 @@ function buildOrchestratorFolder(categoryPath: CategoryPath): string {
  */
 function buildDeploymentConfiguration(
   configuration: Configuration,
-  configurationPath: string,
-  insightsDataMapPath: string,
+  configurationJson: string,
+  insightsDataMapJson: string,
   globalAssets: DeploymentAsset[],
 ): DeploymentConfiguration {
   const automation = configuration.automation;
@@ -319,13 +305,13 @@ function buildDeploymentConfiguration(
         name: "Configuration",
         description: "Automation configuration JSON",
         type: "Text",
-        valueFile: repositoryRelativePath(configurationPath),
+        value: configurationJson,
       },
       {
         name: "InsightsDataMap",
         description: "Maps source fields to UiPath Insights custom fields.",
         type: "Text",
-        valueFile: repositoryRelativePath(insightsDataMapPath),
+        value: insightsDataMapJson,
       },
       // Global assets follow local assets and retain their authored properties.
       ...globalAssets,
@@ -468,25 +454,42 @@ async function processConfiguration(
     );
   }
 
+  // JSON.stringify removes formatting whitespace while preserving whitespace
+  // that belongs to string values inside the configuration.
+  const configurationJson = JSON.stringify(parsedConfiguration);
+
   const insightsDataMapPath = path.join(
     path.dirname(configurationPath),
     INSIGHTS_DATA_MAP_FILE_NAME,
   );
 
+  let insightsDataMapJson: string;
+
   if (!(await fileExists(insightsDataMapPath))) {
     const fields = configuration.input_schema?.fields ?? [];
     const insightsDataMap = buildInsightsDataMap(fields);
+    insightsDataMapJson = JSON.stringify(insightsDataMap);
     await writeFile(
       insightsDataMapPath,
       `${JSON.stringify(insightsDataMap, null, 2)}\n`,
       "utf8",
     );
+  } else {
+    try {
+      const contents = await readFile(insightsDataMapPath, "utf8");
+      const parsedInsightsDataMap = JSON.parse(contents.replace(/^\uFEFF/, ""));
+      insightsDataMapJson = JSON.stringify(parsedInsightsDataMap);
+    } catch (error) {
+      throw new Error(
+        `Unable to parse ${insightsDataMapPath}: ${(error as Error).message}`,
+      );
+    }
   }
 
   const deployment = buildDeploymentConfiguration(
     configuration,
-    configurationPath,
-    insightsDataMapPath,
+    configurationJson,
+    insightsDataMapJson,
     globalAssets,
   );
   const processNameNormalized =

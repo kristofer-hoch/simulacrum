@@ -50,8 +50,8 @@ The deployment flow is configuration-driven:
   tools for the publish/deploy stages.
 - Access to the target UiPath organization, tenant, package feed, and
   Orchestrator folders.
-- Run commands from the repository root. Generated `valueFile` paths are
-  relative to the current working directory.
+- Run commands from the repository root so the documented relative arguments
+  resolve to the expected files.
 
 ## Authoring an automation configuration
 
@@ -148,8 +148,8 @@ Every deployment file defines:
 - The top-level description from `automation.description`.
 - The package feed from `automation.category_path.category_1`.
 - A package ID in the form `Simulacrum.<ProcessNameNormalized>`.
-- `Configuration` and `InsightsDataMap` text assets whose values come from
-  their JSON files.
+- `Configuration` and `InsightsDataMap` text assets containing the minified
+  contents of their JSON files in `value`.
 - Every asset from the `assets` array in the file passed to
   `--global-config`.
 
@@ -157,6 +157,11 @@ Global assets are appended after the `Configuration` and `InsightsDataMap`
 assets, in their original order. Their JSON properties are preserved. The
 script stops before creating output files if the global configuration is
 missing, invalid JSON, or does not contain an `assets` array.
+
+The two automation-specific JSON files are parsed and serialized as compact
+JSON before being embedded. This removes indentation and line breaks without
+removing meaningful spaces inside JSON string values. An invalid existing
+`InsightsDataMap.json` stops generation instead of embedding malformed JSON.
 
 ### Transactional execution
 
@@ -287,11 +292,11 @@ Only `string`, `number`, and `datetime` input types are mapped. A string is
 mapped as a ZIP code only when its description indicates a postal or ZIP code.
 If the map already existed, generation preserves it unchanged.
 
-### Asset files cannot be found during deployment
+### An embedded asset value is rejected during generation
 
-Run the generator from the repository root and ensure the deployment command
-uses the same checkout as its working directory. Asset paths use forward
-slashes so the generated JSON works on Windows and Linux runners.
+Validate both `Configuration.json` and `InsightsDataMap.json`. The generator
+parses each source file before embedding its compact JSON string, so malformed
+JSON is rejected rather than copied into a deployment file.
 
 ### A generated deployment uses the wrong package feed
 

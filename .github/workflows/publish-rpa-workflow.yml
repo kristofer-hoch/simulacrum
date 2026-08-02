@@ -23,7 +23,7 @@ jobs:
         with:
             environment: ${{ inputs.environment }}
 
-    publish-packages:
+    download-artifacts:
         needs: init
         runs-on: ${{ needs.init.outputs.runs-on }}
         environment: ${{ inputs.environment }}
@@ -65,5 +65,45 @@ jobs:
                 run-id: ${{ steps.artifact.outputs.run-id }}
                 path: ${{ needs.init.outputs.dir-distribution }}
         
-        -   name: List Artifacts
-            run: ls -R ${{ needs.init.outputs.dir-distribution }}
+        -   name: Capture Distribution Directory Contents
+            id: dirs
+            run: |
+                DIRS=$(find . -maxdepth 1 -type d -not -path '*/.*' -not -path '.' | jq -R -s -c 'split("\n") | del(.[] | select(. == ""))')
+                echo "matrix=$DIRS" >> $GITHUB_OUTPUT
+    
+    process-artifacts:
+        needs: [init, download-artifacts]
+        runs-on: ${{ needs.init.outputs.runs-on }}
+        environment: ${{ inputs.environment }}
+        strategy:
+            matrix:
+                dir: ${{ fromJSON(needs.download-artifacts.outputs.matrix) }}
+        steps:
+        -   name: Initialize UiPath CLI Environment
+            uses: ./.github/actions/initialize-uipath-cli
+
+        -   name: UiPath Login
+            env:
+                UIPATH_AUTHORITY: ${{ vars.UIPATH_AUTHORITY }}
+                UIPATH_ORGANIZATION: ${{ vars.UIPATH_ORGANIZATION }}
+                UIPATH_TENANT_NAME: ${{ vars.UIPATH_TENANT_NAME }}
+                UIPATH_CLIENT_ID: ${{ secrets.UIPATH_CLIENT_ID }}
+                UIPATH_SECRET: ${{ secrets.UIPATH_SECRET }}
+            run: |
+                echo "Logging into UiPath Orchestrator..."
+                uip login \
+                    --authority "$UIPATH_AUTHORITY" \
+                    --organization "$UIPATH_ORGANIZATION" \
+                    --tenant "$UIPATH_TENANT_NAME" \
+                    --client-id env.UIPATH_CLIENT_ID \
+                    --client-secret env.UIPATH_SECRET \
+                    --output json
+
+        -   name: Process Artifacts
+            run: |
+                echo "Processing artifacts in distribution directory..."
+                for dir in ${{ needs.download-artifacts.outputs.matrix }}; do
+                    echo "Processing directory: $dir"
+                    sh ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator.sh $dir
+                    # Add your artifact processing commands here
+                done
