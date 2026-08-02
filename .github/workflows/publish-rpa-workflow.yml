@@ -35,6 +35,9 @@ jobs:
             with:
                 ref: '${{ inputs.release-tag }}'
 
+        -   name: Log Metadata File Contents
+            run: cat ${{ needs.init.outputs.release-metadata }}
+
         -   name: Read Release Metadata
             id: metadata
             shell: bash
