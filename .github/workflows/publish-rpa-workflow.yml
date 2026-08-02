@@ -81,7 +81,7 @@ jobs:
                         print(f"{field}={metadata[field]}", file=output)
                 PY
         -   run: |
-                echo "version:${{ steps.metadata.outputs.version}}" 
+                echo "version: ${{ steps.metadata.outputs.version}}" 
                 echo "run-id: ${{ steps.metadata.outputs.run-id}}"
                 echo "artifact-id: ${{ steps.metadata.outputs.artifact-id}}" 
                 echo "artifact-url: ${{ steps.metadata.outputs.artifact-url}}" 
@@ -123,4 +123,5 @@ jobs:
                 DEPLOY_SCRIPT: ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator.ts
                 CONFIG_FILE: ${{ runner.temp }}/deploy-orchestrator-config.json
                 ARTIFACT_DIR: ${{ needs.init.outputs.dir-distribution }}
-            run: node "$DEPLOY_SCRIPT" "$ARTIFACT_DIR" --config "$CONFIG_FILE"
+                RELEASE_TAG: ${{ inputs.release-tag }}
+            run: node "$DEPLOY_SCRIPT" "$ARTIFACT_DIR/$RELEASE_TAG" --config "$CONFIG_FILE"
