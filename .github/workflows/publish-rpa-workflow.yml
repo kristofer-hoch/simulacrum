@@ -74,7 +74,7 @@ jobs:
                 UIPATH_TENANT_NAME: ${{ vars.UIPATH_TENANT_NAME }}
                 UIPATH_CLIENT_ID: ${{ secrets.UIPATH_CLIENT_ID }}
                 UIPATH_SECRET: ${{ secrets.UIPATH_SECRET }}
-                CONFIG_FILE: ${{ runner.temp }}/deploy-orchestrator-config.json
+                CONFIG_FILE: ${{ needs.init.outputs.dir-distribution }}/deploy-orchestrator-config.json
             run: |
                 node --input-type=module <<'NODE'
                 import { writeFileSync } from "node:fs";
@@ -93,6 +93,6 @@ jobs:
         -   name: Process Artifacts
             env:
                 DEPLOY_SCRIPT: ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator.ts
-                CONFIG_FILE: ${{ runner.temp }}/deploy-orchestrator-config.json
+                CONFIG_FILE: ${{ needs.init.outputs.dir-distribution }}/deploy-orchestrator-config.json
                 ARTIFACT_DIR: ${{ needs.init.outputs.dir-distribution }}
             run: node "$DEPLOY_SCRIPT" "$ARTIFACT_DIR" --config "$CONFIG_FILE"
