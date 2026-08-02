@@ -94,31 +94,6 @@ jobs:
                 github-token: ${{ github.token }}
                 run-id: ${{ steps.metadata.outputs.run-id }}
                 path: ${{ needs.init.outputs.dir-distribution }}
-        
-        -   name: Capture Distribution Directory Contents
-            id: dirs
-            shell: bash
-            env:
-                DISTRIBUTION_DIR: ${{ needs.init.outputs.dir-distribution }}
-            run: |
-                DIRS=$(find "$DISTRIBUTION_DIR" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | jq -R -s -c 'split("\n") | map(select(length > 0))')
-                echo "matrix=$DIRS" >> "$GITHUB_OUTPUT"
-    
-    process-artifacts:
-        needs: [init, download-artifacts]
-        runs-on: ${{ needs.init.outputs.runs-on }}
-        environment: ${{ inputs.environment }}
-        strategy:
-            matrix:
-                dir: ${{ fromJSON(needs.download-artifacts.outputs.matrix) }}
-        steps:
-        -   name: Checkout Repository
-            uses: actions/checkout@v7
-            with:
-                ref: '${{ inputs.release-tag }}'
-
-        -   name: Initialize UiPath CLI Environment
-            uses: ./.github/actions/initialize-uipath-cli
 
         -   name: Create Configuration File
             env:
@@ -127,15 +102,25 @@ jobs:
                 UIPATH_TENANT_NAME: ${{ vars.UIPATH_TENANT_NAME }}
                 UIPATH_CLIENT_ID: ${{ secrets.UIPATH_CLIENT_ID }}
                 UIPATH_SECRET: ${{ secrets.UIPATH_SECRET }}
+                CONFIG_FILE: ${{ runner.temp }}/deploy-orchestrator-config.json
             run: |
-                echo "{'authority': '$UIPATH_AUTHORITY','organization': '$UIPATH_ORGANIZATION','tenant': '$UIPATH_TENANT_NAME','client-id': '$UIPATH_CLIENT_ID','client-secret': '$UIPATH_SECRET'}" > ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator-config.json
+                node --input-type=module <<'NODE'
+                import { writeFileSync } from "node:fs";
+
+                const config = {
+                    authority: process.env.UIPATH_AUTHORITY,
+                    organization: process.env.UIPATH_ORGANIZATION,
+                    tenant: process.env.UIPATH_TENANT_NAME,
+                    "client-id": process.env.UIPATH_CLIENT_ID,
+                    "client-secret": process.env.UIPATH_SECRET,
+                };
+                writeFileSync(process.env.CONFIG_FILE, JSON.stringify(config));
+                NODE
+                chmod 600 "$CONFIG_FILE"
 
         -   name: Process Artifacts
             env:
-                ARTIFACT_DIR: ${{ matrix.dir }}
                 DEPLOY_SCRIPT: ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator.ts
-                CONFIG_FILE: ${{ needs.init.outputs.dir-scripts }}/deploy-orchestrator-config.json
-            run: |
-                echo "Processing artifacts in distribution directory..."
-                echo "Processing directory: $ARTIFACT_DIR"
-                node "$DEPLOY_SCRIPT" "$ARTIFACT_DIR" --config "$CONFIG_FILE"
+                CONFIG_FILE: ${{ runner.temp }}/deploy-orchestrator-config.json
+                ARTIFACT_DIR: ${{ needs.init.outputs.dir-distribution }}
+            run: node "$DEPLOY_SCRIPT" "$ARTIFACT_DIR" --config "$CONFIG_FILE"

@@ -63,9 +63,9 @@ function printUsage(): void {
   );
   console.error();
   console.error(
-    "Finds one *.deploy.json manifest and one *.nupkg package in the working directory,",
+    "Recursively finds *.deploy.json manifests in the working directory,",
   );
-  console.error("then applies the deployment to UiPath Orchestrator.");
+  console.error("then applies them to UiPath Orchestrator in sorted order.");
 }
 
 function parseArguments(argv: string[]): Arguments {
@@ -103,7 +103,7 @@ function parseArguments(argv: string[]): Arguments {
 }
 
 function log(message: string): void {
-  console.error(`[deploy] ${message}`);
+  console.log(`[deploy] ${message}`);
 }
 
 function requireNonEmptyString(value: unknown, property: string): string {
@@ -330,6 +330,14 @@ async function uipJson(...uipArguments: string[]): Promise<JsonObject> {
     if (!isObject(parsed)) {
       throw new Error("response root is not an object");
     }
+    const operation =
+      uipArguments[0] === "login"
+        ? "login"
+        : uipArguments.slice(0, 3).join(" ");
+    const result = parsed.Code ?? parsed.code ?? parsed.Result ?? parsed.result;
+    console.log(
+      `[uip] ${operation} completed${typeof result === "string" ? ` (${result})` : ""}`,
+    );
     return parsed;
   } catch (error) {
     const safeArguments = redactUipArguments(uipArguments);
@@ -692,44 +700,103 @@ async function ensureProcesses(
   }
 }
 
-async function discoverDeploymentFiles(workingDirectory: string): Promise<{
-  manifestPath: string;
-  packagePath: string;
-}> {
-  const entries = await readdir(workingDirectory, { withFileTypes: true });
-  const fileNames = entries
-    .filter((entry) => entry.isFile())
-    .map((entry) => entry.name);
-  const deployManifests = fileNames.filter((name) => name.endsWith(".deploy.json"));
-  const packages = fileNames.filter((name) => name.endsWith(".nupkg"));
+async function discoverDeploymentManifests(
+  workingDirectory: string,
+): Promise<string[]> {
+  const manifests: string[] = [];
 
-  let manifestName: string;
-  if (deployManifests.length === 1) {
-    [manifestName] = deployManifests;
-  } else if (deployManifests.length > 1) {
-    throw new Error(
-      `Expected one *.deploy.json file in '${workingDirectory}'; found ${deployManifests.length}`,
-    );
-  } else {
-    const jsonFiles = fileNames.filter((name) => name.endsWith(".json"));
-    if (jsonFiles.length !== 1) {
-      throw new Error(
-        `Expected one *.deploy.json file in '${workingDirectory}'; found none and found ${jsonFiles.length} other JSON files`,
-      );
+  async function visit(directory: string): Promise<void> {
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await visit(entryPath);
+      } else if (entry.isFile() && entry.name.endsWith(".deploy.json")) {
+        manifests.push(entryPath);
+      }
     }
-    [manifestName] = jsonFiles;
   }
 
-  if (packages.length !== 1) {
+  await visit(workingDirectory);
+  manifests.sort();
+  return manifests;
+}
+
+async function findPackageForManifest(
+  manifestPath: string,
+  packageId: string,
+): Promise<string> {
+  const manifestDirectory = path.dirname(manifestPath);
+  const expectedPrefix = `${packageId}.`;
+  const entries = await readdir(manifestDirectory, { withFileTypes: true });
+  const matchingPackages = entries
+    .filter(
+      (entry) =>
+        entry.isFile() &&
+        entry.name.startsWith(expectedPrefix) &&
+        entry.name.endsWith(".nupkg"),
+    )
+    .map((entry) => path.join(manifestDirectory, entry.name))
+    .sort();
+
+  if (matchingPackages.length !== 1) {
     throw new Error(
-      `Expected one *.nupkg file in '${workingDirectory}'; found ${packages.length}`,
+      `Expected one ${packageId}.*.nupkg beside '${manifestPath}'; found ${matchingPackages.length}`,
     );
   }
+  return matchingPackages[0];
+}
 
-  return {
-    manifestPath: path.join(workingDirectory, manifestName),
-    packagePath: path.join(workingDirectory, packages[0]),
-  };
+async function loadDeploymentManifest(
+  manifestPath: string,
+): Promise<DeploymentManifest> {
+  let parsedManifest: unknown;
+  try {
+    const contents = await readFile(manifestPath, "utf8");
+    parsedManifest = JSON.parse(contents.replace(/^\uFEFF/, ""));
+  } catch (error) {
+    throw new Error(
+      `Unable to parse deployment manifest ${manifestPath}: ${(error as Error).message}`,
+    );
+  }
+  return validateManifest(parsedManifest, manifestPath);
+}
+
+async function processDeployment(manifestPath: string): Promise<void> {
+  const manifest = await loadDeploymentManifest(manifestPath);
+  const packagePath = await findPackageForManifest(
+    manifestPath,
+    manifest.packageId,
+  );
+  const manifestDirectory = path.dirname(manifestPath);
+  log(`Using package: ${path.basename(packagePath)}`);
+
+  const packageFileName = path.basename(packagePath);
+  const expectedPrefix = `${manifest.packageId}.`;
+  const fileVersion = packageFileName.slice(
+    expectedPrefix.length,
+    -".nupkg".length,
+  );
+  if (!fileVersion) {
+    throw new Error(`Unable to derive package version from ${packageFileName}`);
+  }
+  if (manifest.packageVersion && manifest.packageVersion !== fileVersion) {
+    throw new Error(
+      `Manifest packageVersion '${manifest.packageVersion}' does not match package filename version '${fileVersion}'`,
+    );
+  }
+  const packageVersion = manifest.packageVersion ?? fileVersion;
+
+  await ensureFolderPath(manifest);
+  await ensureAssets(manifest, manifestDirectory);
+  await ensureQueue(manifest);
+  const feedArguments = await resolveFeedArguments(manifest.packageFeed);
+  await ensurePackage(manifest, packagePath, packageVersion, feedArguments);
+  await ensureProcesses(manifest, packageVersion);
+
+  log(
+    `Deployment complete: ${manifest.packageId}:${packageVersion} in ${manifest.folder}`,
+  );
 }
 
 async function main(): Promise<void> {
@@ -756,52 +823,25 @@ async function main(): Promise<void> {
     throw new Error(`Working directory is not a directory: ${workingDirectory}`);
   }
 
-  const { manifestPath, packagePath } =
-    await discoverDeploymentFiles(workingDirectory);
-  log(`Using deployment manifest: ${path.basename(manifestPath)}`);
-  log(`Using package: ${path.basename(packagePath)}`);
-
-  let parsedManifest: unknown;
-  try {
-    const contents = await readFile(manifestPath, "utf8");
-    parsedManifest = JSON.parse(contents.replace(/^\uFEFF/, ""));
-  } catch (error) {
-    throw new Error(
-      `Unable to parse deployment manifest ${manifestPath}: ${(error as Error).message}`,
-    );
-  }
-  const manifest = validateManifest(parsedManifest, manifestPath);
   const loginConfiguration = await loadLoginConfiguration(configPath);
-
-  const packageFileName = path.basename(packagePath);
-  const expectedPrefix = `${manifest.packageId}.`;
-  if (!packageFileName.startsWith(expectedPrefix) || !packageFileName.endsWith(".nupkg")) {
-    throw new Error(
-      `Package filename '${packageFileName}' does not match packageId '${manifest.packageId}'`,
-    );
-  }
-  const fileVersion = packageFileName.slice(expectedPrefix.length, -".nupkg".length);
-  if (!fileVersion) {
-    throw new Error(`Unable to derive package version from ${packageFileName}`);
-  }
-  if (manifest.packageVersion && manifest.packageVersion !== fileVersion) {
-    throw new Error(
-      `Manifest packageVersion '${manifest.packageVersion}' does not match package filename version '${fileVersion}'`,
-    );
-  }
-  const packageVersion = manifest.packageVersion ?? fileVersion;
-
   await login(loginConfiguration);
-  await ensureFolderPath(manifest);
-  await ensureAssets(manifest, workingDirectory);
-  await ensureQueue(manifest);
-  const feedArguments = await resolveFeedArguments(manifest.packageFeed);
-  await ensurePackage(manifest, packagePath, packageVersion, feedArguments);
-  await ensureProcesses(manifest, packageVersion);
 
-  log(
-    `Deployment complete: ${manifest.packageId}:${packageVersion} in ${manifest.folder}`,
-  );
+  log(`Searching for *.deploy.json files in ${workingDirectory}`);
+  const manifestPaths = await discoverDeploymentManifests(workingDirectory);
+  if (manifestPaths.length === 0) {
+    throw new Error(
+      `No *.deploy.json files were found in working directory '${workingDirectory}'`,
+    );
+  }
+  log(`Found ${manifestPaths.length} deployment manifest(s)`);
+
+  for (const [index, manifestPath] of manifestPaths.entries()) {
+    const relativePath = path.relative(workingDirectory, manifestPath);
+    log(`[${index + 1}/${manifestPaths.length}] Processing ${relativePath}`);
+    await processDeployment(manifestPath);
+  }
+
+  log(`Processed ${manifestPaths.length} deployment manifest(s) successfully`);
 }
 
 main().catch((error: unknown) => {
