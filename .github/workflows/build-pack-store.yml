@@ -111,8 +111,6 @@ jobs:
                     --digest $DIGEST \
                     --outfile ${{ needs.init.outputs.release-metadata }}
         -   name: Push Release Tag
-            env:
-                RELEASE_TAG: 
             run: |
                 git config --global user.name "github-actions[bot]"
                 git config --global user.email "github-actions[bot]@users.noreply.github.com"
