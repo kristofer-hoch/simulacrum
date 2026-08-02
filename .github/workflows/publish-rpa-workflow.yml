@@ -95,6 +95,11 @@ jobs:
                 run-id: ${{ steps.metadata.outputs.run-id }}
                 path: ${{ needs.init.outputs.dir-distribution }}
 
+        -   name: List Downloaded Artifacts
+            run: |
+                echo "Downloaded artifacts:"
+                ls -lR ${{ needs.init.outputs.dir-distribution }}
+
         -   name: Create Configuration File
             env:
                 UIPATH_AUTHORITY: ${{ vars.UIPATH_AUTHORITY }}
