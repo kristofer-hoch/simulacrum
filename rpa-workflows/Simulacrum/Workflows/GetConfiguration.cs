@@ -47,9 +47,7 @@ namespace Simulacrum.Workflows
                 config = new Configuration(jsonConfigString);
                 config.DataAgentOrchestratorFolder = assetSuccess[assetAgentOrchestratorFolder].ToString();
                 config.DataAgentProcessName = assetSuccess[assetAgentProcessName].ToString();
-                
-                var jobData = GetRunningJobInformation();
-                config.AutomationName = jobData.ProcessName;
+
             }
             catch(Exception e) {
                 var messages = new Dictionary<String, Object>();
