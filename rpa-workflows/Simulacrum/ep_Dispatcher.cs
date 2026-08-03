@@ -9,16 +9,24 @@ namespace Simulacrum
 {
     public class ep_Dispatcher : CodedWorkflow
     {
-        private const string workflowType = "Dispatcher";
-        
         [Workflow]
         public void Execute()
         {
+            services.OutputLoggerService.Log("Starting the process");
+            
             try {
-                services.OutputLoggerService.Log(string.Format("Starting workflow: {0}", workflowType));
-
-                services.OutputLoggerService.Log("Getting configuration for the automation", LogLevel.Info, StandardLogFields);
+                services.OutputLoggerService.Log("Getting the process configuration");
                 Config = workflows.GetConfiguration(false);
+            }
+            catch(Exception e) {
+                var message = string.Format("Could not get configuration at the start of the process: {0}", e.Message);
+                services.OutputLoggerService.Log(message, LogLevel.Fatal, null);
+
+                workflows.GlobalException(e);
+                
+                throw e;
+            }
+            try {
                 StandardLogFields = UtilityHelpers.GetAdditionalLogFields(Config);
                 
                 services.OutputLoggerService.Log(string.Format("Executing Process: {0}", Config.AutomationName), LogLevel.Info, StandardLogFields);
@@ -41,11 +49,13 @@ namespace Simulacrum
                         reference, 
                         10000);
                 }
-                services.OutputLoggerService.Log(string.Format("Finished workflow: {0}", workflowType));                
+                services.OutputLoggerService.Log("Process completed");                
             }
             catch (Exception e) {
-                services.OutputLoggerService.Log(string.Format("Exception in '{0}' workflow: {1}", workflowType, e.Message));
+                services.OutputLoggerService.Log(string.Format("Exception: {0}", e.Message));
                 workflows.GlobalException(e);
+                
+                throw e;
             }
         }
         

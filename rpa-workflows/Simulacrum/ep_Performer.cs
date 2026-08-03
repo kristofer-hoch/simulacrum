@@ -7,15 +7,27 @@ using Simulacrum.Models;
 namespace Simulacrum
 {
     public class ep_Performer : CodedWorkflow
-    {
-        private const string workflowType = "Performer";
-        
+    {        
         [Workflow]
         public void Execute()
-        {
+        {                
+            services.OutputLoggerService.Log("Starting the process");
+            
             try {
-                services.OutputLoggerService.Log(string.Format("Starting workflow: {0}", workflowType));
+                services.OutputLoggerService.Log("Getting the process configuration");
                 Config = workflows.GetConfiguration(false);
+            }
+            catch(Exception e) {
+                var message = string.Format("Could not get configuration at the start of the process: {0}", e.Message);
+                services.OutputLoggerService.Log(message, LogLevel.Fatal, null);
+
+                workflows.GlobalException(e);
+                
+                throw e;
+            }
+            
+            try {
+
                 
                 while(1 == 1) {
                     var newTransactionItem = workflows.GetTransaction(Config);
@@ -47,12 +59,13 @@ namespace Simulacrum
 
                 }
                 
-                services.OutputLoggerService.Log(string.Format("Finished workflow: {0}", workflowType));                
+                services.OutputLoggerService.Log("Process completed");                
             }
             catch (Exception e) {
-                var message = string.Format("Exception in '{0}' workflow: {1}", workflowType, e.Message);
-                services.OutputLoggerService.Log(message, LogLevel.Fatal, Config.StandardLogFields);
+                services.OutputLoggerService.Log(string.Format("Exception: {0}", e.Message));
                 workflows.GlobalException(e);
+                
+                throw e;
             }
         }
         
