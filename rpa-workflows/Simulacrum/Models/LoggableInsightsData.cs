@@ -8,18 +8,6 @@ namespace Simulacrum.Models
 {
     public class LoggableInsightsData
     {
-        private const NumberStyles AcceptedNumberStyles = NumberStyles.Float | NumberStyles.AllowThousands;
-        private const string AcceptedNumberFormatDescription = "an invariant-culture number such as 1234.56, 1,234.56, or 1.25E3";
-
-        private static readonly string[] AcceptedDateTimeFormats =
-        {
-            "yyyy-MM-dd",
-            "yyyy-MM-dd'T'HH:mm:ss",
-            "yyyy-MM-dd'T'HH:mm:ss.FFFFFFF",
-            "yyyy-MM-dd'T'HH:mm:ssK",
-            "yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK"
-        };
-
         public LoggableInsightsData(Configuration config, QueueItem item) {
             Item = item;
             var map = config.InsightsDataMapping;
@@ -68,7 +56,8 @@ namespace Simulacrum.Models
         public Dictionary<string, string> CustomZipCodeVariables { get; set; }
 
         private static double ParseInvariantNumber(string fieldName, string value) {
-            if(Double.TryParse(value, AcceptedNumberStyles, CultureInfo.InvariantCulture, out var parsedValue))
+            
+            if(Double.TryParse(value, out var parsedValue))
                 return parsedValue;
 
             throw new FormatException(
@@ -77,12 +66,8 @@ namespace Simulacrum.Models
 
         private static DateTime ParseInvariantDateTime(string fieldName, string value) {
             var dateTimeStyles = DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.RoundtripKind;
-            if(DateTime.TryParseExact(
-                value,
-                AcceptedDateTimeFormats,
-                CultureInfo.InvariantCulture,
-                dateTimeStyles,
-                out var parsedValue))
+
+            if(DateTime.TryParse(value, out var parsedValue))
                 return parsedValue;
 
             throw new FormatException(
