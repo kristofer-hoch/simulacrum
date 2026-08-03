@@ -40,8 +40,6 @@ namespace Simulacrum.Workflows
                 throw new Exception(message, e);
             }
             
-            // Second: Parse the Json
-            additionalLogFields.Add("DataAgentOutput", string.Format("<![CDATA[{0}]]>", outputJson));
             try {
                 agentData = new AgentData(outputJson);
             }
