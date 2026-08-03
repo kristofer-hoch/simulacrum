@@ -681,21 +681,6 @@ async function ensureProcesses(
     } else {
       log(`Process version is current: ${processDefinition.name}`);
     }
-
-    const updateArguments = [
-      "or",
-      "processes",
-      "update",
-      processKey,
-      "--name",
-      processDefinition.name,
-      "--entry-point",
-      processDefinition.entryPoint,
-    ];
-    if (processDefinition.description) {
-      updateArguments.push("--description", processDefinition.description);
-    }
-    await uipJson(...updateArguments);
   }
 }
 
