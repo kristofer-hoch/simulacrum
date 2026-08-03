@@ -56,23 +56,13 @@ namespace Simulacrum.Models
         public Dictionary<string, string> CustomZipCodeVariables { get; set; }
 
         private static double ParseInvariantNumber(string fieldName, string value) {
-            
-            if(Double.TryParse(value, out var parsedValue))
-                return parsedValue;
-
-            throw new FormatException(
-                $"Insights number field '{fieldName}' must contain {AcceptedNumberFormatDescription}.");
+            Double.TryParse(value, out var parsedValue);
+            return parsedValue;
         }
 
         private static DateTime ParseInvariantDateTime(string fieldName, string value) {
-            var dateTimeStyles = DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.RoundtripKind;
-
-            if(DateTime.TryParse(value, out var parsedValue))
-                return parsedValue;
-
-            throw new FormatException(
-                $"Insights date/time field '{fieldName}' must use one of these invariant ISO formats: " +
-                String.Join(", ", AcceptedDateTimeFormats) + ".");
+            DateTime.TryParse(value, out var parsedValue);
+            return parsedValue;
         }
         
         /// <summary>
