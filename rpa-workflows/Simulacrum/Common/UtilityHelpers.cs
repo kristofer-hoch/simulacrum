@@ -13,8 +13,15 @@ namespace Simulacrum.Common
         public static Dictionary<string, object> GetAdditionalLogFields(Configuration config, Dictionary<string, object> additionalLogFields) {
             var logFields = new Dictionary<string, object>();
 
-            if(null != config)
-                logFields = config.StandardLogFields;
+            if(null != config && null != config.StandardLogFields){
+                foreach(var configKey in config.StandardLogFields.Keys) {
+                    var configValue = config.StandardLogFields[configKey];
+                    if(logFields.ContainsKey(configKey)) 
+                        logFields[configKey] = configValue;
+                    else
+                        logFields.Add(configKey, configValue);
+                }
+            }
             
             if(null != additionalLogFields) {
                 foreach(var key in additionalLogFields.Keys) {
