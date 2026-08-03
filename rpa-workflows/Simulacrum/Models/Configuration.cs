@@ -52,7 +52,7 @@ namespace Simulacrum.Models
                 
             }
             catch(Exception e) {
-                throw e;
+                throw;
             }
             
             BuildStandardLogFields();

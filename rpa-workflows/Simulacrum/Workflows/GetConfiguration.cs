@@ -55,7 +55,7 @@ namespace Simulacrum.Workflows
                 messages.Add("ExceptionMessage", e.Message);
                 
                 services.OutputLoggerService.Log("Could not get the asset from Orchestrator", LogLevel.Fatal, messages);
-                throw(e);
+                throw;
             }
             
             services.OutputLoggerService.Log("Adding Insights Data Map", LogLevel.Trace);
