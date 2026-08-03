@@ -515,38 +515,46 @@ async function ensureAssets(
 }
 
 async function ensureQueue(manifest: DeploymentManifest): Promise<void> {
-  if (!manifest.queue) {
+  const queue = manifest.queue;
+  if (!queue) {
     return;
   }
 
-  const listed = await uipJson(
-    "or",
-    "queues",
-    "list",
-    "--folder-path",
-    manifest.folder,
-    "--name",
-    manifest.queue.name,
-    "--limit",
-    "100",
-  );
-  if (exactNamedItem(listed, manifest.queue.name)) {
-    log(`Queue exists: ${manifest.queue.name}`);
-    return;
+  const pageSize = 100;
+  for (let offset = 0; ; offset += pageSize) {
+    const listed = await uipJson(
+      "or",
+      "queues",
+      "list",
+      "--folder-path",
+      manifest.folder,
+      "--limit",
+      String(pageSize),
+      "--offset",
+      String(offset),
+    );
+    const queues = dataItems(listed);
+    if (queues.some((item) => (item.Name ?? item.name) === queue.name)) {
+      log(`Queue exists: ${queue.name}`);
+      return;
+    }
+    if (queues.length < pageSize) {
+      break;
+    }
   }
 
   const createArguments = [
     "or",
     "queues",
     "create",
-    manifest.queue.name,
+    queue.name,
     "--folder-path",
     manifest.folder,
   ];
-  if (manifest.queue.description) {
-    createArguments.push("--description", manifest.queue.description);
+  if (queue.description) {
+    createArguments.push("--description", queue.description);
   }
-  log(`Creating queue: ${manifest.queue.name}`);
+  log(`Creating queue: ${queue.name}`);
   await uipJson(...createArguments);
 }
 
