@@ -17,6 +17,13 @@ on:
             description: 'Release tag for the artifacts to publish'
             required: true
             type: string
+    secrets:
+        UIPATH_CLIENT_ID:
+            description: 'UiPath Client ID for Orchestrator authentication'
+            required: true
+        UIPATH_SECRET:
+            description: 'UiPath Secret for Orchestrator authentication'
+            required: true
 
 permissions:
     actions: read
