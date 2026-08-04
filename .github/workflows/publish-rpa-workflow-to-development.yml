@@ -10,7 +10,7 @@ on:
 
 jobs:
     publish-to-development:
-        uses: ./.github/workflows/publish-rpa-workflow.yml
+        uses: ./.github/workflows/reusable-publish-rpa-workflow.yml
         with:
             environment: 'Development'
             runs-on: 'ubuntu-latest'
