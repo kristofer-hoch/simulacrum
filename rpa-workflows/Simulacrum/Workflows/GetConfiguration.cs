@@ -12,13 +12,21 @@ namespace Simulacrum.Workflows
         private readonly string assetCommonInsightsDataMap = "InsightsDataMap";
         private readonly string assetAgentOrchestratorFolder = "DataAgentFolder";
         private readonly string assetAgentProcessName = "DataAgentName";
+        private readonly string assetAgentRequestedRecordCount = "DataAgentRequestedRecordCount";
         
         [Workflow]
         public Configuration Execute()
         {
             services.OutputLoggerService.Log("Starting Workflow: GetConfiguration");
             var hasAssetDownloadFailures = false;
-            var assetList = new List<string>() { assetConfiguration, assetCommonInsightsDataMap, assetAgentOrchestratorFolder, assetAgentProcessName};
+            var assetList = new List<string>() { 
+                assetConfiguration, 
+                assetCommonInsightsDataMap, 
+                assetAgentOrchestratorFolder, 
+                assetAgentProcessName, 
+                assetAgentRequestedRecordCount
+            };
+            
             var assetSuccess = new Dictionary<string, object>();
             
             foreach (var assetName in assetList) {
@@ -46,8 +54,7 @@ namespace Simulacrum.Workflows
             try {
                 config = new Configuration(jsonConfigString);
                 config.DataAgentOrchestratorFolder = assetSuccess[assetAgentOrchestratorFolder].ToString();
-                config.DataAgentProcessName = assetSuccess[assetAgentProcessName].ToString();
-
+                config.DataAgentProcessName = assetSuccess[assetAgentProcessName].ToString();              
             }
             catch(Exception e) {
                 var messages = new Dictionary<String, Object>();
@@ -58,6 +65,19 @@ namespace Simulacrum.Workflows
                 throw;
             }
             
+            try {
+                var recordsCount = (Int32) assetSuccess[assetAgentRequestedRecordCount];
+                config.SetMockDataRecordsCount(recordsCount);
+            }
+            catch(Exception e) {
+                var messages = new Dictionary<String, Object>();
+                messages.Add("JSONConfigurationString", jsonConfigString);
+                messages.Add("ExceptionMessage", e.Message);
+                
+                services.OutputLoggerService.Log("Could not convert records count", LogLevel.Fatal, messages);
+                throw;
+            }
+
             services.OutputLoggerService.Log("Adding Insights Data Map", LogLevel.Trace);
             var dataMap = new InsightsDataMap(assetSuccess[assetCommonInsightsDataMap].ToString());
             

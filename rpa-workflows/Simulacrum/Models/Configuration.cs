@@ -98,6 +98,19 @@ namespace Simulacrum.Models
         
         public Dictionary<string, object> StandardLogFields { get; private set;}
         
+        public void SetMockDataRecordsCount(Int32 count) {
+            var rawJson = RawJsonString;
+            JObject jsonObject = JObject.Parse(rawJson);
+            
+            // Set mock_data_records to 50.
+            // This updates the property if present or adds it if missing.
+            jsonObject["mock_data_records"] = 50;
+            
+            // Serialize it.
+            string updatedJson = jsonObject.ToString();
+            RawJsonString = updatedJson;
+        }
+        
         private void BuildStandardLogFields(){
             StandardLogFields = new Dictionary<string, object>();
             StandardLogFields.Add("AutomationName", AutomationName);

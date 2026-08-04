@@ -11,6 +11,12 @@
             "description": "Name of the deployed data-agent process",
             "type": "Text",
             "value": "Simulacrum Data Agent"
+        },
+        {
+            "name": "DataAgentRequestedRecordCount",
+            "description": "Number of records to request from the data-agent process",
+            "type": "Integer",
+            "value": "10"
         }
     ]
 }

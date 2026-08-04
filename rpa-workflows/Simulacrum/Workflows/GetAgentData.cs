@@ -37,7 +37,7 @@ namespace Simulacrum.Workflows
                 additionalLogFields.Add("ExceptionMessage", e.Message);
                 services.OutputLoggerService.Log(message, UiPath.CodedWorkflows.LogLevel.Fatal, additionalLogFields);
                 
-                throw new Exception(message, e);
+                throw;
             }
             
             try {
@@ -47,7 +47,7 @@ namespace Simulacrum.Workflows
             {
                 var message = string.Format("Could not parse the output from the {0}", config.DataAgentProcessName);
                 services.OutputLoggerService.Log(message, UiPath.CodedWorkflows.LogLevel.Fatal, additionalLogFields);        
-                throw new Exception(message, e);                
+                throw;                
             }
             
             services.OutputLoggerService.Log("Finished Workflow: GetAgentData");
