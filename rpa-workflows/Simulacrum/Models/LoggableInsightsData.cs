@@ -9,45 +9,33 @@ namespace Simulacrum.Models
     public class LoggableInsightsData
     {
         public LoggableInsightsData(Configuration config, QueueItem item) {
+            if(null == item) {
+                throw new NullReferenceException("Missing a queue item to process");
+            }
             Item = item;
-            var map = config.InsightsDataMapping;
+
+            if(null == config.InsightsDataMapping)
+                throw new NullReferenceException("Could not find an InsightsDataMap");
+            
+            InsightsDataMap map = config.InsightsDataMapping;
+
             
             // ======================================================================================
             try {
                 CustomStringVariables = GetCustomVariablesDictionary(map.StringVariables);
-            }
-            catch(Exception e) {
-                throw new Exception("Exception encountered while mapping CustomStringVariables", e);
-            }
-
-            // ======================================================================================
-            try {                
                 CustomNumberVariables = 
                     GetCustomVariablesDictionary(map.NumberVariables).
                     ToDictionary(x => x.Key, x => ParseInvariantNumber(x.Key, x.Value));
-            }
-            catch(Exception e) {
-                throw new Exception("Exception encountered while mapping CustomNumberVariables", e);
-            }
-
-            // ======================================================================================
-            try {
+                
                 CustomDataTimeVariables = 
                     GetCustomVariablesDictionary(map.DateTimeVariables).
                     ToDictionary(x => x.Key, x => ParseInvariantDateTime(x.Key, x.Value));
-            }
-            catch(Exception e) {
-                throw new Exception("Exception encountered while mapping CustomDataTimeVariables", e);
-            }
 
-            // ======================================================================================
-            try {
                 CustomZipCodeVariables = GetCustomVariablesDictionary(map.ZipCodeVariables);
             }
             catch(Exception e) {
-                throw new Exception("Exception encountered while mapping CustomZipCodeVariables", e);
-            }
-            
+                throw;
+            }            
         }
         
         public Dictionary<string, string> CustomStringVariables { get; set; }

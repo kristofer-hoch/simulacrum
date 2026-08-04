@@ -75,6 +75,7 @@ namespace Simulacrum.Workflows
         /// </summary>
         /// <param name="results"></param>
         private void LogResults(ProcessExecutionResults results) {
+            LoggableInsightsData loggable;
             var additionalLogFields = new Dictionary<string, object>();
             additionalLogFields.Add(logfProcessingRecordId, Guid.NewGuid().ToString());
             additionalLogFields.Add(logfProcessingRecordStatus, "SUCCESSFUL");
@@ -93,8 +94,25 @@ namespace Simulacrum.Workflows
             var logFields = UtilityHelpers.GetAdditionalLogFields(Config, additionalLogFields);
             if(results.TransactionItem.Status == QueueItemStatus.Successful) {
                 services.OutputLoggerService.Log("Successfully processed the record", LogLevel.Info, logFields);
-                var loggable = new LoggableInsightsData(Config, results.TransactionItem);
+                
+                try{
+                    loggable = new LoggableInsightsData(Config, results.TransactionItem);
+                    
+                }
+                catch(NullReferenceException nre) {
+                    additionalLogFields.Add("NullReferenceData_InsightsDataMapping", Config.InsightsDataMapping);
+                    additionalLogFields.Add("NullReferenceData_QueueItemContent", results.TransactionItem.SpecificContent);
+                    services.OutputLoggerService.Log(String.Format("Missing required objects to build a LoggableDataItem: {0}", nre.Message), LogLevel.Error, additionalLogFields);
+                    throw;
+                }
+                catch(Exception e) {
+                    
+                    services.OutputLoggerService.Log(String.Format("Could not build a Loggable data item: {0}", e.Message), LogLevel.Error, additionalLogFields);
+                    throw;
+                }
+                
                 workflows.LogInsightsData(Config, loggable);
+
             }
             else {
                 services.OutputLoggerService.Log("Failures encountered when processing the data record", LogLevel.Warn, logFields);
