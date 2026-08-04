@@ -1,17 +1,22 @@
 name: Publish Artifacts to Orchestrator
 
 on:
-  workflow_dispatch:
+  workflow_call: 
     inputs:
-      environment:
-        description: 'Environment to use for publishing artifacts'
-        required: true
-        default: 'Development'
-        type: environment
-      release-tag:
-        description: 'Release tag for the artifacts to publish'
-        required: true
-        type: string
+        runs-on:
+            description: 'The type of machine to run the job on'
+            required: true
+            default: 'ubuntu-latest'
+            type: string
+        environment:
+            description: 'Environment to use for publishing artifacts'
+            required: true
+            default: 'Development'
+            type: string
+        release-tag:
+            description: 'Release tag for the artifacts to publish'
+            required: true
+            type: string
 
 permissions:
     actions: read
@@ -22,13 +27,33 @@ jobs:
         uses: ./.github/workflows/reusable-variables.yml
         with:
             environment: ${{ inputs.environment }}
+            runs-on: ${{ inputs.runs-on }}
+
+    motd:
+        runs-on: ${{ needs.init.outputs.runs-on }}
+        steps:
+        -   name: Display Environment Information
+            run: |
+                echo "Build Agent OS: ${{ needs.init.outputs.runs-on }}"
+                echo "Environment: ${{ inputs.environment }}"
+                echo "Release Tag: ${{ inputs.release-tag }}"
+                echo "Release Metadata File: ${{ needs.init.outputs.release-metadata }}"
+                echo ""
+                echo "-----------------------"
+                echo "Configured Directories"
+                echo "----------------------"
+                echo "Deployment Directory: ${{ needs.init.outputs.dir-deployment }}"
+                echo "Scripts Directory: ${{ needs.init.outputs.dir-scripts }}"
+                echo "Configs Directory: ${{ needs.init.outputs.dir-configs }}"
+                echo "Generated Configs Directory: ${{ needs.init.outputs.dir-generated }}"
+                echo "Distribution Directory: ${{ needs.init.outputs.dir-distribution }}"
+                echo "RPA Simulacrum Directory: ${{ needs.init.outputs.dir-rpa-simulacrum }}"
+                echo ""
 
     download-artifacts:
         needs: init
         runs-on: ${{ needs.init.outputs.runs-on }}
         environment: ${{ inputs.environment }}
-        outputs:
-            matrix: ${{ steps.dirs.outputs.matrix }}
         steps:
         -   name: Checkout Repository
             uses: actions/checkout@v7

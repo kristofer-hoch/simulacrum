@@ -1,0 +1,18 @@
+name: Publish Artifacts to Production Orchestrator
+
+on:
+    workflow_dispatch: 
+        inputs:
+            release-tag:
+                description: 'Release tag for the artifacts to publish'
+                required: true
+                type: string
+
+jobs:
+    publish-to-production:
+        uses: ./.github/workflows/publish-rpa-workflow.yml
+        with:
+            environment: 'Production'
+            runs-on: 'ubuntu-latest'
+            release-tag: ${{ inputs.release-tag }}
+       
