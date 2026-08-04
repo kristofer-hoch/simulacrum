@@ -97,7 +97,7 @@ jobs:
                 UIPATH_SECRET: ${{ secrets.UIPATH_SECRET }}
                 CONFIG_FILE: ${{ needs.init.outputs.dir-distribution }}/deploy-orchestrator-config.json
             run: |
-                echo "Id: " & secrets.UIPATH_CLIENT_ID
+                echo "Id: " & process.env.UIPATH_CLIENT_ID
                 node --input-type=module <<'NODE'
                 import { writeFileSync } from "node:fs";
 
