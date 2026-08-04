@@ -1,4 +1,4 @@
-name: Publish Artifacts to Production Orchestrator
+name: Publish Artifacts to Orchestrator (Production)
 
 on:
     workflow_dispatch: 

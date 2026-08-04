@@ -1,4 +1,4 @@
-name: Buildscript Variable Initialization
+name: (Reusable Only) Buildscript Variable Initialization
 on:
     workflow_call:
         inputs:
@@ -57,6 +57,18 @@ jobs:
                 echo "dir-rpa-simulacrum=rpa-workflows/Simulacrum" >> "$GITHUB_OUTPUT"
                 echo "release-metadata=.github/deployment/release-metadata.json" >> "$GITHUB_OUTPUT"
 
+        -   name: Display Environment Information
+            run: |
+                echo "---------------------------------"
+                echo "Configured Environment Variables:"
+                echo "---------------------------------"
+                echo "Deployment Directory: ${{ steps.paths.outputs.dir-deployment }}"
+                echo "Scripts Directory: ${{ steps.paths.outputs.dir-scripts }}"
+                echo "Configs Directory: ${{ steps.paths.outputs.dir-configs }}"
+                echo "Generated Configs Directory: ${{ steps.paths.outputs.dir-generated }}"
+                echo "Distribution Directory: ${{ steps.paths.outputs.dir-distribution }}"
+                echo "RPA Simulacrum Directory: ${{ steps.paths.outputs.dir-rpa-simulacrum }}"
+                echo "Release Metadata File: ${{ steps.paths.outputs.release-metadata }}"
 
 
     

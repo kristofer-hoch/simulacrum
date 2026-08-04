@@ -1,4 +1,4 @@
-name: Publish Artifacts to Development Orchestrator
+name: Publish Artifacts to Orchestrator (Development)
 
 on:
   workflow_dispatch:  

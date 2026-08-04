@@ -1,4 +1,4 @@
-name: Publish Artifacts to Orchestrator
+name: (Reusable Only) Publish Artifacts to Orchestrator
 
 on:
   workflow_call: 
@@ -32,22 +32,11 @@ jobs:
     motd:
         runs-on: ${{ needs.init.outputs.runs-on }}
         steps:
-        -   name: Display Environment Information
+        -   name: Display Publish Workflow Information
             run: |
                 echo "Build Agent OS: ${{ needs.init.outputs.runs-on }}"
                 echo "Environment: ${{ inputs.environment }}"
                 echo "Release Tag: ${{ inputs.release-tag }}"
-                echo "Release Metadata File: ${{ needs.init.outputs.release-metadata }}"
-                echo ""
-                echo "-----------------------"
-                echo "Configured Directories"
-                echo "----------------------"
-                echo "Deployment Directory: ${{ needs.init.outputs.dir-deployment }}"
-                echo "Scripts Directory: ${{ needs.init.outputs.dir-scripts }}"
-                echo "Configs Directory: ${{ needs.init.outputs.dir-configs }}"
-                echo "Generated Configs Directory: ${{ needs.init.outputs.dir-generated }}"
-                echo "Distribution Directory: ${{ needs.init.outputs.dir-distribution }}"
-                echo "RPA Simulacrum Directory: ${{ needs.init.outputs.dir-rpa-simulacrum }}"
                 echo ""
 
     download-artifacts:
