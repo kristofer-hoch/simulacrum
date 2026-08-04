@@ -25,7 +25,7 @@ namespace Simulacrum
 
                 workflows.GlobalException(e);
                 
-                throw e;
+                throw;
             }
             
             try {
@@ -55,7 +55,7 @@ namespace Simulacrum
                 services.OutputLoggerService.Log(string.Format("Exception: {0}", e.Message));
                 workflows.GlobalException(e);
                 
-                throw e;
+                throw;
             }
         }
         

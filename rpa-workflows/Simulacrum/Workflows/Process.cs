@@ -50,6 +50,7 @@ namespace Simulacrum.Workflows
                 executionResults.Details = businessException.StackTrace;
                 executionResults.Reason = businessException.Message;
                 executionResults.TransactionErrorType = UiPath.Core.Activities.ErrorType.Business;
+                throw;
             }   
             catch(Exception systemException) {
                 executionResults.TransactionItem.Status = QueueItemStatus.Failed;
@@ -57,6 +58,7 @@ namespace Simulacrum.Workflows
                 executionResults.Details = systemException.StackTrace;
                 executionResults.Reason = systemException.Message;
                 executionResults.TransactionErrorType = UiPath.Core.Activities.ErrorType.Application;
+                throw;
             }
             
             LogResults(executionResults);

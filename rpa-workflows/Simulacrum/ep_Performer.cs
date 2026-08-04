@@ -34,9 +34,13 @@ namespace Simulacrum
                     if(null == newTransactionItem)
                         break;
                     
-                    var executionResults = workflows.Process(Config, newTransactionItem);
-                    var workingTransactionItem = executionResults.TransactionItem;
+                    ProcessExecutionResults executionResults;
+                    QueueItem workingTransactionItem;
+                    
                     try {
+                        executionResults = workflows.Process(Config, newTransactionItem);
+                        workingTransactionItem = executionResults.TransactionItem;
+
                         if(workingTransactionItem.Status == QueueItemStatus.Successful) {
                             system.SetTransactionStatus(workingTransactionItem, ProcessingStatus.Successful);
                         }
@@ -54,7 +58,7 @@ namespace Simulacrum
                         }                        
                     }
                     catch(Exception e){
-                        throw new Exception("Could not set the transaction status", e);
+                        throw;
                     }
 
                 }
@@ -65,7 +69,7 @@ namespace Simulacrum
                 services.OutputLoggerService.Log(string.Format("Exception: {0}", e.Message));
                 workflows.GlobalException(e);
                 
-                throw e;
+                throw;
             }
         }
         
