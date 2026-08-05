@@ -66,7 +66,7 @@ namespace Simulacrum.Workflows
             // #1 Check to see if the dictionary of variables is valid.
             var (isDictionaryValid,dictionaryInvalidMessage) = IsCustomVariableCollectionValid<T>(customVariables, friendlyNamedCustomVariableType);
             if(!isDictionaryValid) {
-                services.OutputLoggerService.Log(dictionaryInvalidMessage, LogLevel.Warn, Config.StandardLogFields);
+                services.OutputLoggerService.Log(dictionaryInvalidMessage, LogLevel.Trace, Config.StandardLogFields);
                 return;
             }
             
@@ -95,7 +95,7 @@ namespace Simulacrum.Workflows
             
             // #4 Log the custom variables along with an appropriate message.
             var message = String.Format("Adding custom variables (Insights data type: {0}) to log", friendlyNamedCustomVariableType);
-            services.OutputLoggerService.Log(message, LogLevel.Info, additionalLogFields);
+            services.OutputLoggerService.Log(message, LogLevel.Trace, additionalLogFields);
             
             
             return;
