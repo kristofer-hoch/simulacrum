@@ -104,7 +104,7 @@ namespace Simulacrum.Models
             
             // Set mock_data_records to 50.
             // This updates the property if present or adds it if missing.
-            jsonObject["mock_data_records"] = 50;
+            jsonObject["mock_data_records"] = count;
             
             // Serialize it.
             string updatedJson = jsonObject.ToString();
