@@ -15,21 +15,16 @@ namespace Simulacrum
             services.OutputLoggerService.Log("Starting the process");
             
             try {
-                services.OutputLoggerService.Log("Getting the process configuration");
-                Config = workflows.GetConfiguration(false);
-            }
-            catch(Exception e) {
-                var message = string.Format("Could not get configuration at the start of the process: {0}", e.Message);
-                services.OutputLoggerService.Log(message, LogLevel.Fatal, null);
-
-                workflows.GlobalException(e);
-                
-                throw e;
-            }
-            try {
-                StandardLogFields = UtilityHelpers.GetAdditionalLogFields(Config);
-                
-                services.OutputLoggerService.Log(string.Format("Executing Process: {0}", Config.AutomationName), LogLevel.Info, StandardLogFields);
+                try {
+                    services.OutputLoggerService.Log("Getting the process configuration");
+                    Config = workflows.GetConfiguration(false);
+                    StandardLogFields = UtilityHelpers.GetAdditionalLogFields(Config);
+                }
+                catch(Exception e) {
+                    var message = string.Format("Could not get configuration at the start of the process: {0}", e.Message);
+                    services.OutputLoggerService.Log(message, LogLevel.Fatal, null);
+                    throw;
+                }
                 
                 services.OutputLoggerService.Log("Downloading data from the Agent", LogLevel.Trace, StandardLogFields);
                 var agentData = workflows.GetAgentData(Config);
@@ -54,8 +49,7 @@ namespace Simulacrum
             catch (Exception e) {
                 services.OutputLoggerService.Log(string.Format("Exception: {0}", e.Message));
                 workflows.GlobalException(e);
-                
-                throw e;
+                throw;
             }
         }
         

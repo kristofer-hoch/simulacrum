@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UiPath.CodedWorkflows;
 using UiPath.Core;
+
 using Simulacrum.Models;
 
 namespace Simulacrum
@@ -14,53 +15,34 @@ namespace Simulacrum
             services.OutputLoggerService.Log("Starting the process");
             
             try {
-                services.OutputLoggerService.Log("Getting the process configuration");
-                Config = workflows.GetConfiguration(false);
-            }
-            catch(Exception e) {
-                var message = string.Format("Could not get configuration at the start of the process: {0}", e.Message);
-                services.OutputLoggerService.Log(message, LogLevel.Fatal, null);
-
-                workflows.GlobalException(e);
                 
-                throw e;
-            }
-            
-            try {
-
+                try {
+                    services.OutputLoggerService.Log("Getting the process configuration");
+                    Config = workflows.GetConfiguration(false);
+                }
+                catch(Exception e) {
+                    var message = string.Format("Could not get configuration at the start of the process: {0}", e.Message);
+                    services.OutputLoggerService.Log(message, LogLevel.Fatal, null);
+                    throw;
+                }
                 
+                // Perform while we're going transactions
                 while(1 == 1) {
-                    var newTransactionItem = workflows.GetTransaction(Config);
-                    if(null == newTransactionItem)
+                    var transactionItem = workflows.GetTransaction(Config);
+                    if(null == transactionItem)
                         break;
                     
-                    ProcessExecutionResults executionResults;
-                    QueueItem workingTransactionItem;
-                    
                     try {
-                        executionResults = workflows.Process(Config, newTransactionItem);
-                        workingTransactionItem = executionResults.TransactionItem;
-
-                        if(workingTransactionItem.Status == QueueItemStatus.Successful) {
-                            system.SetTransactionStatus(workingTransactionItem, ProcessingStatus.Successful);
-                        }
-                        else {
-                            system.SetTransactionStatus(
-                                workingTransactionItem, 
-                                ProcessingStatus.Failed, 
-                                string.Empty,
-                                workingTransactionItem.SpecificContent,
-                                null,
-                                executionResults.Details,
-                                executionResults.TransactionErrorType,
-                                executionResults.Reason,
-                                10000);
-                        }                        
+                        workflows.Process(Config, transactionItem);
+                        system.SetTransactionStatus(transactionItem, ProcessingStatus.Successful);
+                    }
+                    catch(BusinessRuleException bre) {
+                        SetTranscationFailureStatus(bre, UiPath.Core.Activities.ErrorType.Business, transactionItem);
                     }
                     catch(Exception e){
+                        SetTranscationFailureStatus(e, UiPath.Core.Activities.ErrorType.Application, transactionItem);
                         throw;
                     }
-
                 }
                 
                 services.OutputLoggerService.Log("Process completed");                
@@ -71,6 +53,19 @@ namespace Simulacrum
                 
                 throw;
             }
+        }
+        
+        private void SetTranscationFailureStatus(Exception exception, UiPath.Core.Activities.ErrorType errorType, QueueItem transactionItem) {
+            system.SetTransactionStatus(
+                transactionItem, 
+                ProcessingStatus.Failed, 
+                string.Empty,
+                transactionItem.SpecificContent,
+                null,
+                exception.Message,
+                errorType,
+                "The process encountered an exception",
+                10000);
         }
         
         private Configuration Config { get; set; }

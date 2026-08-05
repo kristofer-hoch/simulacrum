@@ -15,41 +15,45 @@ namespace Simulacrum
         {                
             services.OutputLoggerService.Log("Starting the process");
             
-            try {
-                services.OutputLoggerService.Log("Getting the process configuration");
-                Config = workflows.GetConfiguration(false);
-            }
-            catch(Exception e) {
-                var message = string.Format("Could not get configuration at the start of the process: {0}", e.Message);
-                services.OutputLoggerService.Log(message, LogLevel.Fatal, null);
-
-                workflows.GlobalException(e);
-                
-                throw;
-            }
+            var recordsProcessed = 0;
+            var recordsToProcess = 0;
             
             try {
-                StandardLogFields = UtilityHelpers.GetAdditionalLogFields(Config);
+                try {
+                    services.OutputLoggerService.Log("Getting the process configuration");
+                    Config = workflows.GetConfiguration(false);
+                }
+                catch(Exception e) {
+                    var message = string.Format("Could not get configuration at the start of the process: {0}", e.Message);
+                    services.OutputLoggerService.Log(message, LogLevel.Fatal, null);
+                    throw;
+                }
                 
-                services.OutputLoggerService.Log(string.Format("Executing Process: {0}", Config.AutomationName), LogLevel.Info, StandardLogFields);
+                StandardLogFields = UtilityHelpers.GetAdditionalLogFields(Config);
                 
                 services.OutputLoggerService.Log("Downloading data from the Agent", LogLevel.Trace, StandardLogFields);
                 var agentData = workflows.GetAgentData(Config);
+                recordsToProcess = agentData.InputData.Count;
                 
                 services.OutputLoggerService.Log("Processing data from the Agent", LogLevel.Trace, StandardLogFields);
                 var sessionReference = Guid.NewGuid().ToString();
                 foreach(var specificContent in agentData.InputData) {
-                    
-                    var results = Process(sessionReference, specificContent);
-                    
                     Boolean shouldStop = workflows.ShouldStop();
                     if(shouldStop) {
                         services.OutputLoggerService.Log("Recieved stop request from Orchestator.", LogLevel.Warn, StandardLogFields);
                         break;
                     }
+                    
+                    services.OutputLoggerService.Log(String.Format("Processing record {0} of {1}.", recordsProcessed, recordsToProcess), LogLevel.Trace, StandardLogFields);
+
+                    // I don't need to try/catch here because that logic is handled in ProcessRecord
+                    ProcessRecord(sessionReference, specificContent, 1);
+                    
+                    recordsProcessed++;
                 }
                 
-                services.OutputLoggerService.Log("Process completed");                
+                services.OutputLoggerService.Log(String.Format("Processed {0} records of {1}.", recordsProcessed, recordsToProcess), LogLevel.Info, StandardLogFields);          
+                services.OutputLoggerService.Log("Process completed", LogLevel.Info, StandardLogFields);                
             }
             catch (Exception e) {
                 services.OutputLoggerService.Log(string.Format("Exception: {0}", e.Message));
@@ -59,42 +63,36 @@ namespace Simulacrum
             }
         }
         
-        /// <summary>
-        /// 
-        /// </summary>
         private Configuration Config { get; set; }
         
         private Dictionary<string, object> StandardLogFields { get; set; }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sessionReference"></param>
-        /// <param name="specificContent"></param>
-        /// <returns></returns>
-        private ProcessExecutionResults Process(string sessionReference, Dictionary<string, object> specificContent) {
+        private void ProcessRecord(string sessionReference, Dictionary<string, object> specificContent, Int32 attemptNumber) {
+            Int32 maxRetries = 3;
             var queueItem = new QueueItem();
             queueItem.Reference = sessionReference;
             queueItem.SpecificContent = specificContent;
-
-            var results = new ProcessExecutionResults(queueItem);
-            var output = new Dictionary<string, object>();
-
-            var attemptProcess = true;
-            var attemptNumber = 1;
-            while(attemptProcess)
-            {
-                attemptNumber++;
-                attemptProcess = attemptNumber < 3;
-                
-                results = workflows.Process(Config, queueItem);
-    
-                if(results.TransactionItem.Status == QueueItemStatus.Successful)
-                    attemptProcess = false;
-            }
             
-            results.TransactionItem.Output = output;
-            return results;
+            try {         
+                workflows.Process(Config, queueItem);
+            }
+            catch(BusinessRuleException bre) {
+                if(attemptNumber > 3);
+                    throw;
+                
+                attemptNumber++;
+                
+                var additionalLogFields = new Dictionary<string, object>();
+                additionalLogFields.Add("ProcessExecution_ExceptionMessage", bre.Message);
+                additionalLogFields.Add("ProcessExecution_AttemptNumber", attemptNumber);
+                services.OutputLoggerService.Log(String.Format("Retry attempt {0} of {1}", attemptNumber, maxRetries), LogLevel.Error, additionalLogFields);
+                
+                // Recursion until we reach maxRetries
+                ProcessRecord(sessionReference, specificContent, attemptNumber);
+            }
+            catch(Exception e) {
+                throw;                        
+            }
         }
     }
 }
