@@ -15,15 +15,12 @@ namespace Simulacrum.Workflows
         private const String logfProcessingRecordMessage = "PROCESS_RECORD_MESSAGE";
         
         [Workflow]
-        public ProcessExecutionResults Execute(Configuration config, QueueItem item)
+        public void Execute(Configuration config, QueueItem item)
         {
             services.OutputLoggerService.Log("Begin Workflow: Process");
             Config = config;
-            var executionResults = new ProcessExecutionResults(item);
-            
-            // Generating a chance of failure based on the number of applications and data sources, plus 2.
             TimeSpanBetweenActions = 2 + Config.Applications.Count + Config.DataSources.Count;
-            PercentChanceOfFailure =  .01;
+            PercentChanceOfFailure =  .001;
             
             try {
                 foreach(var application in Config.Applications) {
@@ -41,85 +38,48 @@ namespace Simulacrum.Workflows
                     CheckForRandomBuisnessException(dataSource);
                     Delay();
                 }
-                
-                executionResults.TransactionItem.Status = QueueItemStatus.Successful;
             }
             catch(BusinessRuleException businessException) {
-                executionResults.TransactionItem.Status = QueueItemStatus.Failed;
-                executionResults.BusinessException = businessException;
-                executionResults.Details = businessException.StackTrace;
-                executionResults.Reason = businessException.Message;
-                executionResults.TransactionErrorType = UiPath.Core.Activities.ErrorType.Business;
                 throw;
             }   
             catch(Exception systemException) {
-                executionResults.TransactionItem.Status = QueueItemStatus.Failed;
-                executionResults.SystemException = systemException;
-                executionResults.Details = systemException.StackTrace;
-                executionResults.Reason = systemException.Message;
-                executionResults.TransactionErrorType = UiPath.Core.Activities.ErrorType.Application;
                 throw;
             }
             
-            LogResults(executionResults);
+            
+            var additionalLogFields = new Dictionary<string, object>();
+            additionalLogFields.Add(logfProcessingRecordId, item.Reference);
+            additionalLogFields.Add(logfProcessingRecordStatus, "SUCCESSFUL");
+            services.OutputLoggerService.Log(String.Format("Successfully processed record with id '{0}'.", item.Reference.ToString()), LogLevel.Trace, additionalLogFields);
+            
+ 
+            var loggableAdditionalFields = new Dictionary<string, object>();
+            
+            try{
+                loggableAdditionalFields.Add("LOGGING_InsightsDataMapping", Config.InsightsDataMapping);
+                loggableAdditionalFields.Add("LOGGING_SpecificContent_QueueItemContent", item.SpecificContent);
+                var loggable = new LoggableInsightsData(Config, item);
+
+                services.OutputLoggerService.Log("Calling LogInsightsData workflow.", LogLevel.Trace, loggableAdditionalFields);
+                workflows.LogInsightsData(Config, loggable);
+                
+            }
+            catch(NullReferenceException nre) {
+                services.OutputLoggerService.Log(String.Format("Missing required objects to build a LoggableDataItem: {0}", nre.Message), LogLevel.Fatal, loggableAdditionalFields);
+                throw;
+            }
+            catch(Exception e) {
+                services.OutputLoggerService.Log(String.Format("Could not build a Loggable data item: {0}", e.Message), LogLevel.Fatal, loggableAdditionalFields);
+                throw;
+            }
             
             services.OutputLoggerService.Log("End Workflow: Process");
-            return executionResults;
         }
         
         private Double PercentChanceOfFailure { get; set; }
         private Int32 TimeSpanBetweenActions { get; set; }
         private Configuration Config { get; set;}
 
-        
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="results"></param>
-        private void LogResults(ProcessExecutionResults results) {
-            LoggableInsightsData loggable;
-            var additionalLogFields = new Dictionary<string, object>();
-            additionalLogFields.Add(logfProcessingRecordId, Guid.NewGuid().ToString());
-            additionalLogFields.Add(logfProcessingRecordStatus, "SUCCESSFUL");
-            additionalLogFields.Add(logfProcessingRecordMessage, "Successfully processed the record.");
-            
-            if(null != results.BusinessException) {
-                additionalLogFields[logfProcessingRecordStatus] = "FAILURE";
-                additionalLogFields[logfProcessingRecordMessage] = results.BusinessException.Message;
-            }
-            
-            if(null != results.SystemException) {
-                additionalLogFields[logfProcessingRecordStatus] = "FAILURE";
-                additionalLogFields[logfProcessingRecordMessage] = results.SystemException.Message;
-            }
-            
-            var logFields = UtilityHelpers.GetAdditionalLogFields(Config, additionalLogFields);
-            if(results.TransactionItem.Status == QueueItemStatus.Successful) {
-                services.OutputLoggerService.Log("Successfully processed the record", LogLevel.Info, logFields);
-                
-                try{
-                    loggable = new LoggableInsightsData(Config, results.TransactionItem);
-                    
-                }
-                catch(NullReferenceException nre) {
-                    additionalLogFields.Add("NullReferenceData_InsightsDataMapping", Config.InsightsDataMapping);
-                    additionalLogFields.Add("NullReferenceData_QueueItemContent", results.TransactionItem.SpecificContent);
-                    services.OutputLoggerService.Log(String.Format("Missing required objects to build a LoggableDataItem: {0}", nre.Message), LogLevel.Error, additionalLogFields);
-                    throw;
-                }
-                catch(Exception e) {
-                    
-                    services.OutputLoggerService.Log(String.Format("Could not build a Loggable data item: {0}", e.Message), LogLevel.Error, additionalLogFields);
-                    throw;
-                }
-                
-                workflows.LogInsightsData(Config, loggable);
-
-            }
-            else {
-                services.OutputLoggerService.Log("Failures encountered when processing the data record", LogLevel.Warn, logFields);
-            }
-        }
         
         private void Delay() {
             var sleepTime = Random.Shared.Next(250, 1000) * TimeSpanBetweenActions;
@@ -143,10 +103,11 @@ namespace Simulacrum.Workflows
         }
 
         private bool CheckForRandomException() {
+            var result = false;
             if(Random.Shared.NextDouble() < PercentChanceOfFailure)
-                return true;
+                result  = true;
             
-            return false;
+            return result ;
         }
     }
 }
