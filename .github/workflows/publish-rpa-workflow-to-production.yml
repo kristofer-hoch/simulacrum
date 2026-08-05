@@ -7,6 +7,10 @@ on:
                 description: 'Release tag for the artifacts to publish'
                 required: true
                 type: string
+            forced-assets:
+                description: 'Optional list of asset names to forcefully update in Orchestrator'
+                required: false
+                type: string
 
 jobs:
     publish-to-production:

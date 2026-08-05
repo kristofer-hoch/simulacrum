@@ -47,6 +47,7 @@ interface UipInvocation {
 interface Arguments {
   workingDirectory: string;
   configPath: string;
+  forceAssets: Set<string>;
 }
 
 interface LoginConfiguration {
@@ -59,7 +60,7 @@ interface LoginConfiguration {
 
 function printUsage(): void {
   console.error(
-    "Usage: deploy-orchestrator.ts WORKING_DIRECTORY --config CONFIGJSON",
+    "Usage: deploy-orchestrator.ts WORKING_DIRECTORY --config CONFIGJSON [--force-assets ASSET1,ASSET2]",
   );
   console.error();
   console.error(
@@ -71,6 +72,7 @@ function printUsage(): void {
 function parseArguments(argv: string[]): Arguments {
   let workingDirectory: string | undefined;
   let configPath: string | undefined;
+  let forceAssets: Set<string> | undefined;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -87,6 +89,23 @@ function parseArguments(argv: string[]): Arguments {
       continue;
     }
 
+    if (argument === "--force-assets") {
+      if (forceAssets !== undefined) {
+        throw new Error("--force-assets may only be provided once");
+      }
+      const value = argv[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error("--force-assets requires a comma-separated asset list");
+      }
+      const names = value.split(",").map((name) => name.trim());
+      if (names.some((name) => name.length === 0)) {
+        throw new Error("--force-assets contains an empty asset name");
+      }
+      forceAssets = new Set(names);
+      index += 1;
+      continue;
+    }
+
     if (argument.startsWith("--")) {
       throw new Error(`Unknown argument: ${argument}`);
     }
@@ -99,7 +118,7 @@ function parseArguments(argv: string[]): Arguments {
   if (!workingDirectory || !configPath) {
     throw new Error("WORKING_DIRECTORY and --config CONFIGJSON are required");
   }
-  return { workingDirectory, configPath };
+  return { workingDirectory, configPath, forceAssets: forceAssets ?? new Set() };
 }
 
 function log(message: string): void {
@@ -451,6 +470,7 @@ async function ensureFolderPath(manifest: DeploymentManifest): Promise<void> {
 async function ensureAssets(
   manifest: DeploymentManifest,
   workingDirectory: string,
+  forceAssets: Set<string>,
 ): Promise<void> {
   for (const asset of manifest.assets) {
     const listed = await uipJson(
@@ -464,7 +484,8 @@ async function ensureAssets(
       "--limit",
       "100",
     );
-    if (exactNamedItem(listed, asset.name)) {
+    const existing = exactNamedItem(listed, asset.name);
+    if (existing && !forceAssets.has(asset.name)) {
       log(`Asset exists: ${asset.name}`);
       continue;
     }
@@ -485,6 +506,24 @@ async function ensureAssets(
       value = await readFile(valueFile, "utf8");
     } else {
       throw new Error(`Asset '${asset.name}' must define value or valueFile`);
+    }
+
+    if (existing) {
+      const assetKey = stringField(existing, "Key", "key");
+      if (!assetKey) {
+        throw new Error(`Existing asset '${asset.name}' has no key`);
+      }
+      log(`Updating asset value: ${asset.name}`);
+      await uipJson(
+        "or",
+        "assets",
+        "update",
+        assetKey,
+        value,
+        "--folder-path",
+        manifest.folder,
+      );
+      continue;
     }
 
     const createArguments = [
@@ -746,7 +785,10 @@ async function loadDeploymentManifest(
   return validateManifest(parsedManifest, manifestPath);
 }
 
-async function processDeployment(manifestPath: string): Promise<void> {
+async function processDeployment(
+  manifestPath: string,
+  forceAssets: Set<string>,
+): Promise<void> {
   const manifest = await loadDeploymentManifest(manifestPath);
   const packagePath = await findPackageForManifest(
     manifestPath,
@@ -772,7 +814,7 @@ async function processDeployment(manifestPath: string): Promise<void> {
   const packageVersion = manifest.packageVersion ?? fileVersion;
 
   await ensureFolderPath(manifest);
-  await ensureAssets(manifest, manifestDirectory);
+  await ensureAssets(manifest, manifestDirectory, forceAssets);
   await ensureQueue(manifest);
   const feedArguments = await resolveFeedArguments(manifest.packageFeed);
   await ensurePackage(manifest, packagePath, packageVersion, feedArguments);
@@ -822,7 +864,7 @@ async function main(): Promise<void> {
   for (const [index, manifestPath] of manifestPaths.entries()) {
     const relativePath = path.relative(workingDirectory, manifestPath);
     log(`[${index + 1}/${manifestPaths.length}] Processing ${relativePath}`);
-    await processDeployment(manifestPath);
+    await processDeployment(manifestPath, arguments_.forceAssets);
   }
 
   log(`Processed ${manifestPaths.length} deployment manifest(s) successfully`);
