@@ -14,7 +14,7 @@ namespace Simulacrum.Workflows
             var shouldStop = workflows.ShouldStop();
             if(shouldStop) {
                 services.OutputLoggerService.Log("Recieved stop request from Orchestator.", LogLevel.Warn, config.StandardLogFields);
-                return item;
+                return null;
             }
             
             try {
@@ -27,7 +27,7 @@ namespace Simulacrum.Workflows
                 
                 services.OutputLoggerService.Log(message, LogLevel.Fatal, additionalLogFields);
                 
-                throw new Exception(message, e);
+                throw;
             }
             
             return item;
