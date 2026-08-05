@@ -50,6 +50,9 @@ namespace Simulacrum.Workflows
                 throw;                
             }
             
+            additionalLogFields.Add("DataAgentRawJson", config.RawJsonString);
+            services.OutputLoggerService.Log("Agent Data", UiPath.CodedWorkflows.LogLevel.Trace, additionalLogFields);
+            
             services.OutputLoggerService.Log("Finished Workflow: GetAgentData");
             return agentData;
         }    
