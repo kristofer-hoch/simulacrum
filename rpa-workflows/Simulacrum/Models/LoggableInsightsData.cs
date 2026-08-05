@@ -18,7 +18,6 @@ namespace Simulacrum.Models
                 throw new NullReferenceException("Could not find an InsightsDataMap");
             
             InsightsDataMap map = config.InsightsDataMapping;
-
             
             // ======================================================================================
             try {
@@ -76,8 +75,13 @@ namespace Simulacrum.Models
                 foreach(var sourceDataKey in mappedVariables.Keys) {
                     var customVariableKey = mappedVariables[sourceDataKey]; 
     
-                    if(sourceData.ContainsKey(sourceDataKey))              
-                        results.Add(customVariableKey, sourceData[sourceDataKey].ToString());
+                    if(!sourceData.ContainsKey(sourceDataKey))              
+                        continue;
+                    
+                    if(null == sourceData[sourceDataKey])
+                        continue;
+                    
+                    results.Add(customVariableKey, sourceData[sourceDataKey].ToString());
                 }                
             }
             catch(Exception e)
