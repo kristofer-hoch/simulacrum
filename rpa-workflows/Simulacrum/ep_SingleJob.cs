@@ -77,7 +77,7 @@ namespace Simulacrum
                 workflows.Process(Config, queueItem);
             }
             catch(BusinessRuleException bre) {
-                if(attemptNumber > 3);
+                if(attemptNumber > 3)
                     throw;
                 
                 attemptNumber++;
