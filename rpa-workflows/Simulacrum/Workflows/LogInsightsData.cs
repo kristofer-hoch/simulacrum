@@ -18,15 +18,74 @@ namespace Simulacrum.Workflows
         {
             Config = config;
             LoggableData = data;
+            CustomVariableAdditionalLogFields = new Dictionary<string, object>();
+            CustomVariableAdditionalLogFields.Add(LoggableData.LoggableDataGroupIdName, LoggableData.LoggableDataGroupIdValue);
             
-            LogCustomVariableFields<String>(LoggableData.CustomStringVariables, InsightsVariableType.STRING);
-            LogCustomVariableFields<Double>(LoggableData.CustomNumberVariables, InsightsVariableType.DOUBLE);
-            LogCustomVariableFields<DateTime>(LoggableData.CustomDateTimeVariables, InsightsVariableType.DATETIME);
-            LogCustomVariableFields<String>(LoggableData.CustomZipCodeVariables, InsightsVariableType.STRING);            
+            AddCustomVariableFields<String>(LoggableData.CustomStringVariables, InsightsVariableType.STRING);
+            AddCustomVariableFields<Double>(LoggableData.CustomNumberVariables, InsightsVariableType.DOUBLE);
+            AddCustomVariableFields<DateTime>(LoggableData.CustomDateTimeVariables, InsightsVariableType.DATETIME);
+            AddCustomVariableFields<String>(LoggableData.CustomZipCodeVariables, InsightsVariableType.STRING);
+            services.OutputLoggerService.Log("Logging data for Insights", LogLevel.Trace, CustomVariableAdditionalLogFields );
         }
-        
-        private LoggableInsightsData LoggableData { get; set; }        
+
         private Configuration Config { get; set; }
+        private Dictionary<string, object> CustomVariableAdditionalLogFields { get; set; }
+        private LoggableInsightsData LoggableData { get; set; }        
+
+        private void AddCustomVariableFields<T>(IDictionary<String, T> customVariables, InsightsVariableType customVariableType) 
+        {            
+            var ignoredKeys = new List<String>();
+            
+            // Later logged messages will need a reader-friendly version of the variable type.
+            string friendlyNamedCustomVariableType;
+            switch (customVariableType) {
+                case InsightsVariableType.DATETIME:
+                    friendlyNamedCustomVariableType = "DateTime";
+                    break;
+                case InsightsVariableType.DOUBLE:
+                    friendlyNamedCustomVariableType = "Number";
+                    break;
+                case InsightsVariableType.ZIPCODE:
+                    friendlyNamedCustomVariableType = "Zip Code";
+                    break;     
+                default:
+                    friendlyNamedCustomVariableType = "String";
+                    break;                
+            }
+            
+            // #1 Check to see if the dictionary of variables is valid.
+            var (isDictionaryValid,dictionaryInvalidMessage) = IsCustomVariableCollectionValid<T>(customVariables, friendlyNamedCustomVariableType);
+            if(!isDictionaryValid) {
+                services.OutputLoggerService.Log(dictionaryInvalidMessage, LogLevel.Trace, Config.StandardLogFields);
+                return;
+            }
+            
+            // #2 Iterate over the variables, separate protected log fields into their own dictionary.
+            foreach(var logField in customVariables) {
+                var key = logField.Key;
+                
+                // Ignore protected fields.
+                if(IsLogFieldKeyProtected(key))
+                {
+                    ignoredKeys.Add(key);
+                    continue;
+                }
+                
+                if(!CustomVariableAdditionalLogFields.Keys.Contains(key))
+                    CustomVariableAdditionalLogFields.Add(key, logField.Value);
+            }
+            
+            // #3 Log a warning message that protected keys were in the dictionary
+            if(0 < ignoredKeys.Count) {
+                var fields = String.Join(", ", ignoredKeys);
+                //throw new NotImplementedException("Have not included Log yet");
+                var ignoredKeysMessage = String.Format("The following key(s) were ignored because they are protected, and reserved for standard logging: {0}", fields);
+                services.OutputLoggerService.Log(ignoredKeysMessage, LogLevel.Error, Config.StandardLogFields);
+            }
+            
+            
+            return;
+        }
         
         /// <summary>
         /// Converts a collection of custom business intelligence values into structured log fields and
@@ -43,6 +102,7 @@ namespace Simulacrum.Workflows
         /// A friendly name describing the type of custom variables being logged, such as String, Number,
         /// DateTime, or Zip Codes.
         /// </param>
+        /*
         private void LogCustomVariableFields<T>(IDictionary<String, T> customVariables, InsightsVariableType customVariableType) 
         {
             var additionalLogFields = new Dictionary<string, object>();
@@ -105,6 +165,7 @@ namespace Simulacrum.Workflows
             
             return;
         }
+        */
         
         /// <summary>
         /// Determines whether a custom variable collection contains values that can be written as
