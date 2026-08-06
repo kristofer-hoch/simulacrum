@@ -18,6 +18,8 @@ namespace Simulacrum.Models
                 throw new NullReferenceException("Could not find an InsightsDataMap");
             
             InsightsDataMap map = config.InsightsDataMapping;
+            LoggableDataGroupIdValue = item.Reference;
+            LoggableDataGroupIdName = "InsightsDataGroupById";
             
             // ======================================================================================
             try {
@@ -26,7 +28,7 @@ namespace Simulacrum.Models
                     GetCustomVariablesDictionary(map.NumberVariables).
                     ToDictionary(x => x.Key, x => ParseInvariantNumber(x.Key, x.Value));
                 
-                CustomDataTimeVariables = 
+                CustomDateTimeVariables = 
                     GetCustomVariablesDictionary(map.DateTimeVariables).
                     ToDictionary(x => x.Key, x => ParseInvariantDateTime(x.Key, x.Value));
 
@@ -37,9 +39,12 @@ namespace Simulacrum.Models
             }            
         }
         
+        public String LoggableDataGroupIdValue { get; private set; }
+        public String LoggableDataGroupIdName { get; private set; }
+        
         public Dictionary<string, string> CustomStringVariables { get; set; }
         public Dictionary<string, Double> CustomNumberVariables { get; set; }
-        public Dictionary<string, DateTime> CustomDataTimeVariables { get; set; }
+        public Dictionary<string, DateTime> CustomDateTimeVariables { get; set; }
         public Dictionary<string, string> CustomZipCodeVariables { get; set; }
 
         private static double ParseInvariantNumber(string fieldName, string value) {

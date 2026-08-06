@@ -17,12 +17,15 @@ namespace Simulacrum.Workflows
         public void Execute(Configuration config, LoggableInsightsData data)
         {
             Config = config;
-            LogCustomVariableFields<String>(data.CustomStringVariables, InsightsVariableType.STRING);
-            LogCustomVariableFields<Double>(data.CustomNumberVariables, InsightsVariableType.DOUBLE);
-            LogCustomVariableFields<DateTime>(data.CustomDataTimeVariables, InsightsVariableType.DATETIME);
-            LogCustomVariableFields<String>(data.CustomZipCodeVariables, InsightsVariableType.STRING);            
+            LoggableData = data;
+            
+            LogCustomVariableFields<String>(LoggableData.CustomStringVariables, InsightsVariableType.STRING);
+            LogCustomVariableFields<Double>(LoggableData.CustomNumberVariables, InsightsVariableType.DOUBLE);
+            LogCustomVariableFields<DateTime>(LoggableData.CustomDateTimeVariables, InsightsVariableType.DATETIME);
+            LogCustomVariableFields<String>(LoggableData.CustomZipCodeVariables, InsightsVariableType.STRING);            
         }
         
+        private LoggableInsightsData LoggableData { get; set; }        
         private Configuration Config { get; set; }
         
         /// <summary>
@@ -43,6 +46,8 @@ namespace Simulacrum.Workflows
         private void LogCustomVariableFields<T>(IDictionary<String, T> customVariables, InsightsVariableType customVariableType) 
         {
             var additionalLogFields = new Dictionary<string, object>();
+            additionalLogFields.Add(LoggableData.LoggableDataGroupIdName, LoggableData.LoggableDataGroupIdValue);
+            
             var ignoredKeys = new List<String>();
             
             // Later logged messages will need a reader-friendly version of the variable type.

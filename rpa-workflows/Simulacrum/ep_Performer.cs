@@ -33,8 +33,8 @@ namespace Simulacrum
                         break;
                     
                     try {
-                        workflows.Process(Config, transactionItem);
-                        system.SetTransactionStatus(transactionItem, ProcessingStatus.Successful);
+                        transactionItem = workflows.Process(Config, transactionItem);
+                        system.SetTransactionStatus(transactionItem, ProcessingStatus.Successful, String.Empty, new Dictionary<string, object>(), transactionItem.Output, "Adding data to output", UiPath.Core.Activities.ErrorType.Application, string.Empty, 30000);
                     }
                     catch(BusinessRuleException bre) {
                         SetTranscationFailureStatus(bre, UiPath.Core.Activities.ErrorType.Business, transactionItem);

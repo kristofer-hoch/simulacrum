@@ -15,7 +15,7 @@ namespace Simulacrum.Workflows
         private const String logfProcessingRecordMessage = "PROCESS_RECORD_MESSAGE";
         
         [Workflow]
-        public void Execute(Configuration config, QueueItem item)
+        public QueueItem Execute(Configuration config, QueueItem item)
         {
             services.OutputLoggerService.Log("Begin Workflow: Process");
             Config = config;
@@ -46,7 +46,6 @@ namespace Simulacrum.Workflows
                 throw;
             }
             
-            
             var additionalLogFields = new Dictionary<string, object>();
             additionalLogFields.Add(logfProcessingRecordId, item.Reference);
             additionalLogFields.Add(logfProcessingRecordStatus, "SUCCESSFUL");
@@ -59,10 +58,12 @@ namespace Simulacrum.Workflows
                 loggableAdditionalFields.Add("LOGGING_InsightsDataMapping", Config.InsightsDataMapping);
                 loggableAdditionalFields.Add("LOGGING_SpecificContent_QueueItemContent", item.SpecificContent);
                 var loggable = new LoggableInsightsData(Config, item);
+                item.Output= GetTransactionOutputCollection(loggable);
+                
 
                 services.OutputLoggerService.Log("Calling LogInsightsData workflow.", LogLevel.Trace, loggableAdditionalFields);
                 workflows.LogInsightsData(Config, loggable);
-                
+                                
             }
             catch(NullReferenceException nre) {
                 services.OutputLoggerService.Log(String.Format("Missing required objects to build a LoggableDataItem: {0}", nre.Message), LogLevel.Fatal, loggableAdditionalFields);
@@ -74,12 +75,43 @@ namespace Simulacrum.Workflows
             }
             
             services.OutputLoggerService.Log("End Workflow: Process");
+            return item;
         }
         
         private Double PercentChanceOfFailure { get; set; }
         private Int32 TimeSpanBetweenActions { get; set; }
         private Configuration Config { get; set;}
 
+        
+        private Dictionary<string, object> GetTransactionOutputCollection(LoggableInsightsData loggable) {
+            var outputVariables = new Dictionary<string, object>();
+            outputVariables.Add(loggable.LoggableDataGroupIdName, loggable.LoggableDataGroupIdValue);
+            
+            foreach(var key in loggable.CustomDateTimeVariables.Keys)
+            {
+                outputVariables[key] = loggable.CustomDateTimeVariables[key].ToString();
+            }
+            
+            
+            foreach(var key in loggable.CustomNumberVariables.Keys)
+            {
+                outputVariables[key] = loggable.CustomNumberVariables[key].ToString();
+            }
+            
+            
+            foreach(var key in loggable.CustomStringVariables.Keys)
+            {
+                outputVariables[key] = loggable.CustomStringVariables[key];
+            }
+            
+            
+            foreach(var key in loggable.CustomZipCodeVariables.Keys)
+            {
+                outputVariables[key] = loggable.CustomZipCodeVariables[key];
+            }
+            
+            return outputVariables;
+        }
         
         private void Delay() {
             var sleepTime = Random.Shared.Next(250, 1000) * TimeSpanBetweenActions;
