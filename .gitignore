@@ -1,3 +1,6 @@
 **/*.*.deploy.json
 **/InsightsDataMap.json
+tmp/**/*
+output/**/*
+.cache/**/*
 artifact-distribution/
